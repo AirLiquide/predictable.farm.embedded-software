@@ -1,0 +1,40 @@
+config defaults
+	option syn_flood        1
+	option input            ACCEPT
+	option output           ACCEPT
+	option forward          REJECT
+
+config zone
+	option name		lan
+	option network		'lan'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		REJECT
+
+config zone
+	option name		wan
+	option network		'wan'
+	option input		ACCEPT
+	option output		ACCEPT
+	option forward		REJECT
+
+
+config zone
+        option name       wifi
+        list   network    'wifi'
+        option input      ACCEPT
+        option output     ACCEPT
+        option forward    REJECT 
+        
+config 'forwarding'
+        option 'src'        'wifi'
+        option 'dest'       'wan'         
+        
+config 'forwarding'
+        option 'src'        'lan'
+        option 'dest'       'wifi'         
+
+config rule
+        option src              wan
+        option dest_port        80
+        option target           ACCEPT

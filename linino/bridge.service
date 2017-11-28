@@ -1,0 +1,91 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2017 Air Liquide
+# Reference :
+# https://wiki.openwrt.org/doc/techref/initscripts
+
+START=99
+
+EXTRA_COMMANDS="block unblock status"
+EXTRA_HELP="        status  Returns the status of the service
+        block   Forces the loop to stop, and stop the service
+        unblock Reenables the loop mode, and start the service"
+
+boot()
+{
+    export ID=4
+
+    echo "Starting Bridge (loop) ..."
+    rm /root/once.lock
+    while
+        /usr/bin/node /root/bridge.js > /root/bridge.log 2>&1
+        sleep 20
+        echo " -- Relaunching Bridge ..." > /root/bridge.log
+        [ ! -f /root/once.lock ]
+    do true; done
+}
+
+start()
+{
+    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
+    if [ $PROCESSES -eq 2 ]; then
+        echo "Bridge is already running, skip."
+    else
+        echo "Starting Bridge (once)..."
+        /usr/bin/node /root/bridge.js > /root/bridge.log 2>&1 &
+    fi
+}
+
+block()
+{
+    echo "Stopping Bridge ..."
+    killall node
+    touch /root/once.lock
+}
+
+unblock()
+{
+    rm /root/once.lock
+    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
+    if [ $PROCESSES -eq 2 ]; then
+        echo "Bridge is already running, skip starting."
+    else
+        start
+    fi
+}
+
+stop()
+{
+    echo "Stopping Bridge ..."
+    killall node
+    if [ ! -f /root/once.lock ]; then
+        echo "It will restart in less than 20 seconds (loop mode)."
+    fi
+}
+
+restart()
+{
+    echo "Restarting Bridge (it will automatically restart in 20 secs if in loop mode) ..."
+    killall node
+    if [ -f /root/once.lock ]; then
+        start
+    fi
+}
+
+status()
+{
+    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
+    if [ $PROCESSES -eq 2 ]; then
+        if [ ! -f /root/once.lock ]; then
+            echo "Bridge service is running in loop mode."
+        else
+            echo "Bridge service is running (no loop mode)."
+        fi
+    else
+        if [ ! -f /root/once.lock ]; then
+            echo "Bridge service is not running."
+            echo "It will restart in less than 20 seconds (loop mode)."
+        else
+            echo "Bridge service is not running (no loop mode)."
+        fi
+    fi
+}

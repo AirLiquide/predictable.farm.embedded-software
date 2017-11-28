@@ -1,0 +1,23 @@
+#!/bin/sh
+# Copyright (C) 2009 OpenWrt.org
+
+case "$ACTION" in
+    add)
+        # update LEDs
+        #sh /root/test_usb  
+        logger "add"
+        mkdir /mnt/sdb1
+        sleep 5
+        mount /dev/sdb1 /mnt/sdb1
+        #logger "mount"
+        #sleep 2    
+        sh /root/test_js
+        #logger "end"
+        ;;
+    remove)
+        # update LEDs
+        umount /mnt/sdb1
+        logger "remove"
+        ;;
+esac    
+        

@@ -1,0 +1,32 @@
+config wifi-device 'radio0'
+	option type 'mac80211'
+	option hwmode '11ng'
+	option path 'platform/ar933x_wmac'
+	option htmode 'HT20'
+	list ht_capab 'SHORT-GI-20'
+	list ht_capab 'SHORT-GI-40'
+	list ht_capab 'RX-STBC1'
+	list ht_capab 'DSSS_CCK-40'
+#	option disabled '0'
+	option channel 'auto'
+	option country 'FR'
+
+
+config wifi-iface
+        option device 'radio0'
+        option network 'wifi'
+	option encryption 'psk2'
+	option key '54jvdz10jg'
+	option ssid 'PredictableFarm'
+	option mode 'sta'
+
+
+#config wifi-iface
+#	option device 'radio0'
+##	option network 'wifi'
+#        option network 'bridge'
+#	option mode 'ap'
+#	option ssid 'predictableIO'
+##        option encryption 'none'
+#	option encryption 'psk2'
+#	option key 'predictable'

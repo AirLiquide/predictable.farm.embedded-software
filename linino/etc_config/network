@@ -1,0 +1,38 @@
+config interface 'loopback'
+	option ifname    'lo'
+	option proto     'static'
+	option ipaddr    '127.0.0.1'
+	option netmask   '255.0.0.0'
+
+config interface 'lan'
+#	option proto     'dhcp'
+    option 'proto'   'static'
+    option 'ipaddr'  '192.168.1.253'
+    option 'netmask' '255.255.255.0'
+    option 'gateway' '192.168.1.1'
+    option 'dns'     '192.168.1.1'
+
+config interface 'wan'
+#   option proto     'dhcp'
+    option ifname    'eth1'
+    option 'proto'   'static'
+    option 'ipaddr'  '192.168.1.252'
+    option 'netmask' '255.255.255.0'
+    option 'gateway' '192.168.1.1'
+    option 'dns'     '192.168.1.1'
+    option metric    '10'
+
+## Connect to wifi conf
+config 'interface' 'wifi'
+    option proto     'dhcp'
+
+## Bridge conf
+#config 'interface' 'wifi'
+#   option 'proto'   'static'
+#   option 'ipaddr'  '192.168.2.1'
+#   option 'netmask' '255.255.255.0'
+
+#config 'interface' 'bridge'
+#	option type      'bridge'
+#	option ifname    'wlan0 eth1'   # Bridges lan and wan
+#	option proto     'dhcp'         # Change as appropriate  
