@@ -20,6 +20,7 @@
 #define __WATERPH_H__
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
 #include "EZOCircuit.h"
 
 class WaterPH
@@ -35,5 +36,5 @@ class WaterPH
     EZO myEZO ;
     //float ph;
 };
-
+#endif
 #endif

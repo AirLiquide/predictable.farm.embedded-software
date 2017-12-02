@@ -18,16 +18,30 @@
 */
 
 #include "Sensors.h"
-
+ 
+#ifdef SENSOR_TYPE_EZO_SENSOR
 EZO myEZO;
+#endif
 
-enum _water_item {
+enum _sensor_item {
   _item_rtd = 1,
   _item_ph ,
   _item_ec,
   _item_do,
-  _item_orp
+  _item_orp,
+  _item_water_level,
+ /* _item_light_PAR,
+  _item_light_UV ,
+  _item_air_temperature,
+  _item_air_pressure,
+  _item_air_relative_humidity,
+  _item_air_CO,
+  _item_air_CO2,*/
+  _item_soil_temperature,
+  _item_soil_moisture,
+  _item_last
 };
+
 
 /**
    \fn void Sensors::init(LCD * p_LCD,  YunBridge * p_bridge)
@@ -41,11 +55,13 @@ void Sensors::init(LCD * p_LCD,  YunBridge * p_bridge)
 
   p_myLCD = p_LCD;
   p_myBridge = p_bridge;
+  
+#ifdef SENSOR_TYPE_EZO_SENSOR
   myEZO = EZO();
-
+#endif
   //initialize values tamp
 
-#ifdef LOW_COST_SUNLIGHT_SENSOR
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
   sensor_light_lux = 0;
 
   sensor_light_uv  = 0;
@@ -66,24 +82,75 @@ void Sensors::init(LCD * p_LCD,  YunBridge * p_bridge)
 void  Sensors::detect()
 {
   on = false;
+  
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
   water_temperature = -1023;
-  sensor_light_par = 0;
-  sensor_light_uv = 0;
-  sensor_air_temperature = 0;
-  sensor_air_pressure = 0;
-  sensor_air_relative_humidity = 0;
-  sensor_air_CO = 0;
-  sensor_air_CO2 = 0;
-  sensor_soil_temperature = 0;
-  sensor_soil_moisture = 0;
-  sensor_water_temperature = 0;
-  sensor_water_ph = 0;
-  sensor_water_ec = 0;
-  sensor_water_do = 0;
-  sensor_water_orp = 0;
-  sensor_water_level = 0;
+#endif
 
-  sensor_water = _item_rtd;
+#ifdef SENSOR_TYPE_PAR_SENSOR
+  sensor_light_par = 0;
+#endif
+
+
+#ifdef SENSOR_TYPE_UV_SENSOR
+  sensor_light_uv = 0;
+#endif
+
+#ifdef SENSOR_TYPE_AIR_TEMPERATURE_SENSOR
+  sensor_air_temperature = 0;
+#endif
+
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
+  sensor_air_pressure = 0;
+#endif
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
+  sensor_air_relative_humidity = 0;
+#endif
+
+
+#ifdef SENSOR_TYPE_CO_SENSOR
+  sensor_air_CO = 0;
+#endif
+
+#ifdef SENSOR_TYPE_CO2_SENSOR
+  sensor_air_CO2 = 0;
+#endif
+
+#ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
+  sensor_soil_temperature = 0;
+#endif
+
+#ifdef SENSOR_TYPE_SOIL_MOISTURE_SENSOR
+  sensor_soil_moisture = 0;
+#endif
+
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
+  sensor_water_temperature = 0;
+#endif
+
+
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
+  sensor_water_ph = 0;
+#endif
+
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
+  sensor_water_ec = 0;
+#endif
+
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+  sensor_water_do = 0;
+#endif
+
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
+  sensor_water_orp = 0;
+#endif  
+
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
+  sensor_water_level = 0;
+#endif
+
+  sensor_item = _item_rtd;
 
   uint8_t error, address;
   //uint8_t nDevices = 0;
@@ -115,9 +182,11 @@ void  Sensors::detect()
       Serial.print(" : ");
       Serial.println(address);
 #endif
+
       switch (address) {
+
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
         case WATER_LEVEL_ADDR:
-#ifdef WATER_LEVEL_SENSOR
           on = true;
           myWaterlevel = Waterlevel();
 
@@ -125,9 +194,10 @@ void  Sensors::detect()
           printOk();
 
           sensor_water_level = 1;
-#endif
           break;
 
+#endif
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
         ///BAROMETER + TEMP
         case AIR_PRESSURE_MEASUREMENT_ADDR:
           on = true;
@@ -141,7 +211,8 @@ void  Sensors::detect()
 
           sensor_air_pressure = 1 ;
           break;
-
+#endif
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
         ///HUMIDITY +TEMP
         case AIR_HUMIDITY_LEVEL_MEASUREMENT_ADDR:
           on = true;
@@ -156,7 +227,8 @@ void  Sensors::detect()
 
           sensor_air_relative_humidity = 1 ;
           break;
-
+#endif
+#ifdef SENSOR_TYPE_CO2_SENSOR
         ///CO2
         case AIR_CO2_MEASUREMENT_ADDR:
           on = true;
@@ -171,11 +243,12 @@ void  Sensors::detect()
 
           sensor_air_CO2 = 1 ;
           break;
+#endif
 
+#ifdef SENSOR_TYPE_CO_SENSOR
         ///CO
         case AIR_CO_MEASUREMENT_ADDR:
 
-#ifdef CO_SENSOR
           on = true;
           myCO = MutichannelGasSensor();
           myCO.begin();
@@ -185,15 +258,14 @@ void  Sensors::detect()
           printOk();
 
           sensor_air_CO = 1 ;
-#endif
           break;
-
+#endif
 
         ///ADC
         case ADC_MEASUREMENT_ADDR:
           on = true;
           myAdc = Adafruit_ADS1115();
-#ifdef SOIL_TEMPERATURE_SENSOR
+#ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
           essay = myAdc.readADC_SingleEnded(2);
 #ifdef DEBUG
           Serial.print("T");
@@ -207,29 +279,31 @@ void  Sensors::detect()
           }
 #endif
 
-#ifdef PAR_SENSOR
+#ifdef SENSOR_TYPE_PAR_SENSOR
 
           essay = myAdc.readADC_SingleEnded(3);
-#ifdef DEBUG
+//#ifdef DEBUG
 
           Serial.print("PAR");
           Serial.println((unsigned long)essay);
-#endif
-          if ( ( (unsigned long)essay < 65517) && ((unsigned long)essay != 0) ) { //PAR, don't forget to pull down with ground line while not connected
+//#endif
+          if ( ( (unsigned long)essay < 65517) /*&& ((unsigned long)essay != 0) */) { //PAR, don't forget to pull down with ground line while not connected
             p_myLCD->DispStringAt(LIGHT_PAR_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
 
             sensor_light_par = 1 ;
           }
+          
+          //Serial.print(sensor_light_par);
 #endif
-#ifdef UV_SENSOR
+#ifdef SENSOR_TYPE_UV_SENSOR
           if (myAdc.readADC_SingleEnded(0) < 7950) { //UV, don't forget to pull down with ground line while not connected
             p_myLCD->DispStringAt(LIGHT_UV_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
             sensor_light_uv = 1;
           }
 #endif
-#ifdef MOISTURE_SENSOR
+#ifdef SENSOR_TYPE_MOISTURE_SENSOR
           if (myAdc.readADC_SingleEnded(1) > 3000) { // MOISTURE , don't forget to pull down with ground line while not connected
             sensor_soil_moisture = 1;
             p_myLCD->DispStringAt(SOIL_MOISTURE_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
@@ -238,7 +312,7 @@ void  Sensors::detect()
 #endif
           break;
 
-#ifdef LOW_COST_SUNLIGHT_SENSOR
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
         case LIGHT_LUX_MEASUREMENT_ADDR:
           myLuxSensor = DigitalLight_CalculateLux();
           myLuxSensor.init();
@@ -257,6 +331,7 @@ void  Sensors::detect()
           break;
 #endif
 
+#ifdef SENSOR_TYPE_WATER_TEMPERATUREL_SENSOR
         case WATER_TEMPERATURE_MEASUREMENT_ADDR:
           on = true;
           myWaterTempRTD  = WaterTempRTD();
@@ -267,7 +342,9 @@ void  Sensors::detect()
 
           sensor_water_temperature  ++ ;
           break;
+#endif
 
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
         case WATER_PH_MEASUREMENT_ADDR:
           on = true;
           myWaterPH  = WaterPH();
@@ -278,7 +355,9 @@ void  Sensors::detect()
 
           sensor_water_ph++;
           break;
+#endif
 
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
         case WATER_EC_MEASUREMENT_ADDR:
           on = true;
           myWaterEC  = WaterEC();
@@ -289,7 +368,8 @@ void  Sensors::detect()
 
           sensor_water_ec++;
           break;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
         case WATER_ORP_MEASUREMENT_ADDR:
           on = true;
           myWaterORP  = WaterORP();
@@ -301,7 +381,8 @@ void  Sensors::detect()
 
           sensor_water_orp++;
           break;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
         case WATER_DO_MEASUREMENT_ADDR:
           on = true;
           myWaterDO  = WaterDO();
@@ -312,10 +393,11 @@ void  Sensors::detect()
 
           sensor_water_do++;
           break;
-
+#endif
         default:
           break;
       }
+
       //nDevices++;
     }
 #ifdef DEBUG
@@ -368,6 +450,9 @@ void Sensors::printinfo (char* sensorName, double sensorValue, uint8_t sensorPre
   }
 }
 
+
+
+
 /**
    \fn void Sensors::update(uint8_t menu)
    \brief Read the sensors to update the values and sends them to linux
@@ -388,7 +473,9 @@ void Sensors::update(uint8_t menu)
 
   bool bool_water;
 
-  if (sensor_water_level) { //DEPTH with ultrasound
+  
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
+  if (sensor_water_level && sensor_item == _item_water_level) { //DEPTH with ultrasound
     //Serial.print("water level");
     water_level = myWaterlevel.getDistance();
 
@@ -399,10 +486,11 @@ void Sensors::update(uint8_t menu)
     p_myBridge->sendFloat( WATER_LEVEL_NNAME, water_level);
     //Serial.println("us");
     check++;
-
   }
+#endif
 
-  if ( sensor_air_pressure ) {//BAROMETER OK - TEMP OK
+#if defined( SENSOR_TYPE_PRESSURE_SENSOR ) && defined (SENSOR_TYPE_AIR_TEMPERATURE_SENSOR)
+  if ( sensor_air_pressure /*&& sensor_item == _item_air_pressure*/ ) {//BAROMETER OK - TEMP OK
 
     myBarometer.getPT(&air_pressure, &air_temperature);
 
@@ -415,9 +503,15 @@ void Sensors::update(uint8_t menu)
     p_myBridge->sendInteger( AIR_PRESSURE_MEASUREMENT_NNAME,  (unsigned long)air_pressure);
 
     check++;
+
   }
+#endif
+
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
   //p_myLCD->CleanAll(WHITE);
-  if ( sensor_air_relative_humidity ) { //HUMIDITY OK - TEMP INPRECISE
+  if ( sensor_air_relative_humidity /*&& sensor_item == _item_air_relative_humidity */) { //HUMIDITY OK - TEMP INPRECISE
+    
     if (myHum.readSample())
     {
       check++;
@@ -425,15 +519,21 @@ void Sensors::update(uint8_t menu)
       printinfo ( AIR_HUMIDITY_LEVEL_MEASUREMENT_DNAME, myHum.mHumidity, 1, AIR_HUMIDITY_LEVEL_MEASUREMENT_UNIT);
       p_myBridge->sendFloat( AIR_HUMIDITY_LEVEL_MEASUREMENT_NNAME, myHum.mHumidity);
 
+#if not defined(SENSOR_TYPE_PRESSURE_SENSOR ) && defined (SENSOR_TYPE_AIR_TEMPERATURE_SENSOR) && defined(SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR)
       //use the temp of this sensor if there is no other
       if (!(sensor_air_pressure))
       {
         printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, myHum.mTemperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
         p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, myHum.mTemperature);
       }
+#endif
     }
   }
-  if ( sensor_air_CO ) { //CO OK
+#endif
+
+
+#ifdef SENSOR_TYPE_CO_SENSOR
+  if ( sensor_air_CO /*&& sensor_item == _item_air_CO */) { //CO OK
     check++;
     //Serial.print("co");
     air_CO = myCO.measure_CO();
@@ -454,7 +554,10 @@ void Sensors::update(uint8_t menu)
     p_myBridge->sendFloat( AIR_CO_MEASUREMENT_NNAME, air_CO);
 
   }
-  if ( sensor_soil_temperature ) {//ADC - TEMP OK
+#endif
+
+#ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
+  if ( sensor_soil_temperature /*&& sensor_item == _item_soil_temperature*/) {//ADC - TEMP OK
     check++;
 
     soil_temperature = myAdc.readADC_SingleEnded(2) ;
@@ -485,16 +588,20 @@ void Sensors::update(uint8_t menu)
 
     }
   }
-  if (sensor_light_par) {//ADC - JYP OK
+#endif
+
+#ifdef SENSOR_TYPE_PAR_SENSOR
+  if (sensor_light_par /*&& sensor_item == _item_light_PAR*/) {//ADC - JYP OK
     light_par = myAdc.readADC_SingleEnded(3) * 0.0078125 * 99.7;
     if ((unsigned long)light_par > 51000) light_par = 0.0f;
     check++;
     printinfo (LIGHT_PAR_MEASUREMENT_DNAME, light_par, 1, LIGHT_PAR_MEASUREMENT_UNIT);
     p_myBridge->sendFloat( LIGHT_PAR_MEASUREMENT_NNAME, light_par);
-
-
   }
-  if (sensor_light_uv) {//ADC - UV
+#endif
+
+#ifdef SENSOR_TYPE_UV_SENSOR
+  if (sensor_light_uv /* && sensor_item == _item_light_UV*/) {//ADC - UV
     light_uv = myAdc.readADC_SingleEnded(0) * 0.0078125 * 5;
     // if ((int)light_uv < 1225 && (int)light_uv > 5 ) { // FIXME move to detec
     check++;
@@ -505,14 +612,17 @@ void Sensors::update(uint8_t menu)
     // }
 
   }
-  if (sensor_soil_moisture) {//ADC - WMS
+#endif
+  
+#ifdef SENSOR_TYPE_SOIL_MOISTURE_SENSOR
+  if (sensor_soil_moisture && sensor_item == _item_soil_moisture) {//ADC - WMS
     soil_moisture = (myAdc.readADC_SingleEnded(1) * 0.000125 * 239) / 2, 8;
     printinfo (SOIL_MOISTURE_MEASUREMENT_DNAME, soil_moisture, 1, SOIL_MOISTURE_MEASUREMENT_UNIT);
     p_myBridge->sendFloat( SOIL_MOISTURE_MEASUREMENT_NNAME, soil_moisture);
-
   }
-#ifdef LOW_COST_SUNLIGHT_SENSOR
-  if (sensor_light_uv) {
+#endif
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
+  if (sensor_light_uv /*&& sensor_item == _item_light_UV*/) {
     light_lux = mySunLightSensor.ReadVisible();
     printinfo ( LIGHT_LUX_MEASUREMENT_DNAME, light_lux, 0, LIGHT_LUX_MEASUREMENT_UNIT);
     p_myBridge->sendInteger( LIGHT_LUX_MEASUREMENT_NNAME, (unsigned long)light_lux);
@@ -522,8 +632,9 @@ void Sensors::update(uint8_t menu)
     p_myBridge->sendInteger( LIGHT_UV_MEASUREMENT_NNAME, (unsigned long)light_uv);
   }
 #endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
   if (sensor_water_orp) {//WATER ORP - OK
-    if (menu != 6 && sensor_water == _item_orp) {
+    if (menu != 6 && sensor_item == _item_orp) {
       bool_water = myEZO.readData(WATER_ORP_MEASUREMENT_ADDR);
       if (bool_water == false) sensor_water_orp = 0;
       else {
@@ -534,11 +645,11 @@ void Sensors::update(uint8_t menu)
     }
     check++;
     printinfo ( WATER_ORP_MEASUREMENT_DNAME, water_orp, 1, WATER_ORP_MEASUREMENT_UNIT);
-
   }
-
+#endif
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
   if (sensor_water_do) { //WATER DO - OK
-    if (menu != 6 && sensor_water == _item_do) {
+    if (menu != 6 && sensor_item == _item_do) {
       bool_water = myEZO.readData(WATER_DO_MEASUREMENT_ADDR);
       if (bool_water == false) sensor_water_do = 0;
       else {
@@ -550,11 +661,11 @@ void Sensors::update(uint8_t menu)
     }
     check++;
     printinfo ( WATER_DO_MEASUREMENT_DNAME, water_do, 1, WATER_DO_MEASUREMENT_UNIT);
-
   }
-
+#endif  
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
   if (sensor_water_ec) { // WATER EC - OK
-    if (menu != 6 && sensor_water == _item_ec) {
+    if (menu != 6 && sensor_item == _item_ec) {
       bool_water = myEZO.readData(WATER_EC_MEASUREMENT_ADDR);
       if (bool_water == false) sensor_water_ec = 0;
       else {
@@ -567,9 +678,10 @@ void Sensors::update(uint8_t menu)
     printinfo ( WATER_EC_MEASUREMENT_DNAME, water_ec, 1, WATER_EC_MEASUREMENT_UNIT);
 
   }
-
+#endif
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
   if (sensor_water_ph) {//WATER PH - OK
-    if (menu != 6 && sensor_water == _item_ph) {
+    if (menu != 6 && sensor_item == _item_ph) {
       bool_water = myEZO.readData(WATER_PH_MEASUREMENT_ADDR);
       if (bool_water == false) sensor_water_ph = 0;
       else {
@@ -584,9 +696,10 @@ void Sensors::update(uint8_t menu)
 
   }
   //}
-
+#endif
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR 
   if (sensor_water_temperature) { // WATER TEMP -OK
-    if (menu != 6 && sensor_water == _item_rtd) {
+    if (menu != 6 && sensor_item == _item_rtd) {
       bool_water = myEZO.readData(WATER_TEMPERATURE_MEASUREMENT_ADDR);
       if (bool_water == false) sensor_water_temperature = 0;
       else {
@@ -597,17 +710,17 @@ void Sensors::update(uint8_t menu)
     }
     check++;
     printinfo ( WATER_TEMPERATURE_MEASUREMENT_DNAME, water_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
-
   }
+#endif
 
-  if ( sensor_air_CO2 ) { //CO2
+#ifdef SENSOR_TYPE_CO2_SENSOR
+  if ( sensor_air_CO2 /*&& sensor_item == _item_air_CO2*/) { //CO2
     myCO2.measure();
     check++;
     printinfo ( AIR_CO2_MEASUREMENT_DNAME, myCO2.ppm, 0, AIR_CO2_MEASUREMENT_UNIT);
     p_myBridge->sendInteger(AIR_CO2_MEASUREMENT_NNAME, myCO2.ppm);
-
   }
-
+#endif
 
   if (!check && !menu)
     p_myLCD->DispStringAt("No sensor", 6 * CHAR_OFFSET, 1 * ROW_OFFSET);
@@ -616,6 +729,11 @@ void Sensors::update(uint8_t menu)
   Serial.println("");
   Serial.println("");
 #endif
+
+  
+  if (sensor_item < _item_last)
+    sensor_item++;
+  else sensor_item = _item_rtd;
 }
 
 /**
@@ -628,10 +746,14 @@ void Sensors::update(uint8_t menu)
 */
 void Sensors::compensationEC()
 {
-  if (sensor_water_do && (sensor_water + 1) == _item_do) //DO
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+  if (sensor_water_do && (sensor_item + 1) == _item_do) //DO
   {
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
     if ((int)water_ec > 0) myWaterDO.setEcCompensation(water_ec);
+#endif
   }
+#endif
 }
 
 /**
@@ -644,12 +766,20 @@ void Sensors::compensationEC()
 */
 void Sensors::compensationTemp()
 {
+  
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
   if ((int)water_temperature > -1023) {
-    if (sensor_water_ec && (sensor_water + 1) == _item_ec) //EC
+    
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
+    if (sensor_water_ec && (sensor_item + 1) == _item_ec) //EC
       myWaterEC.setTemperatureCompensation(water_temperature);
-    if (sensor_water_do && (sensor_water + 1) == _item_do) //DO
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+    if (sensor_water_do && (sensor_item + 1) == _item_do) //DO
       myWaterDO.setTemperatureCompensation(water_temperature);
+#endif
+#endif
   }
+  #endif
 }
 
 
@@ -663,47 +793,62 @@ void Sensors::compensationTemp()
 */
 void Sensors::waterCall() {
   //if(sensors_water_monitoring>0){
-  if (sensor_water < 5)
-    sensor_water++;
-  else sensor_water = _item_rtd;
-  if (sensor_water == _item_rtd)
+  if (sensor_item < _item_orp)
+    sensor_item++;
+  else sensor_item = _item_rtd;
+  if (sensor_item == _item_rtd)
   {
+    
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
     if (sensor_water_temperature)//WATER TEMP
     {
       myWaterTempRTD.getTemperature();
     }
-    //sensor_water++;
+#endif
+    //sensor_item++;
   }
-  else if (sensor_water == _item_ph)
+  else if (sensor_item == _item_ph)
   {
+    
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
     if (sensor_water_ph )//WATER PH
     {
       myWaterPH.getPh();
     }
-    //sensor_water++;
+#endif
+    //sensor_item++;
   }
-  else if (sensor_water == _item_ec)
+  else if (sensor_item == _item_ec)
   {
+    
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
     if (sensor_water_ec )//WATER EC
     {
       myWaterEC.getEc();
     }
-    //sensor_water++;
+#endif
+    //sensor_item++;
   }
-  else if (sensor_water == _item_do)
+  else if (sensor_item == _item_do)
   {
+    
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
     if (sensor_water_do)//WATER DO
     {
       myWaterDO.getDissolvedOxygen();
     }
-    //sensor_water++;
+#endif
+    //sensor_item++;
   }
-  else if (sensor_water == _item_orp) {
+  else if (sensor_item == _item_orp) {
+    
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
     if (sensor_water_orp) {//WATER ORP
 
       myWaterORP.getORP();
-      //sensor_water = _item_rtd;
+      //sensor_item = _item_rtd;
     }
+#endif
   }
 }
 
@@ -715,18 +860,20 @@ void Sensors::waterCall() {
    \param sensorID: sensor to calibrate, val: num of point for calibration
    \return n/a
 */
-#define TXT_PUT_THE_PROBE "Put the probe"
+#define TXT_PUT_THE_PROBE "Put probe"
 #define TXT_WAIT_2MIN "Wait 2 min"
-#define TXT_WAIT_1_30_MIN "Wait 1:30 min"
+#define TXT_WAIT_1_30_MIN "Wait 1min30"
 #define TXT_WAIT_1MIN "Wait 1 min"
 #define TXT_WAIT_30S "Wait 30 sec"
-#define TXT_PUT_IN_SOLUTION "in the solution "
-#define TXT_EXPOSED_TO_AIR "exoposed to air"
+#define TXT_PUT_IN_SOLUTION "in solution "
+#define TXT_EXPOSED_TO_AIR "exposed to air"
 
 void Sensors::calibrate(uint8_t sensorID, int val)
 {
   uint8_t check = 0;
   reset();
+  
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
   if ((sensorID == 1) && sensor_water_ph && (water_ph < 14) && (water_ph > 0)) //PH
   {
     check++;
@@ -756,7 +903,10 @@ void Sensors::calibrate(uint8_t sensorID, int val)
     }
   }
 
-  else if ((sensorID == 2) && sensor_water_do && (water_do > 0)) //DO
+  else
+  #endif
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+  if ((sensorID == 2) && sensor_water_do && (water_do > 0)) //DO
   {
     check++;
     p_myLCD->println((TXT_PUT_THE_PROBE));
@@ -775,7 +925,10 @@ void Sensors::calibrate(uint8_t sensorID, int val)
       myWaterDO.calibrate_zero();
     }
   }
-  else if ((sensorID == 3) && sensor_water_ec && (water_ec > 0))    //EC
+  else 
+#endif
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
+  if ((sensorID == 3) && sensor_water_ec && (water_ec > 0))    //EC
   {
     check++;
     p_myLCD->println(TXT_PUT_THE_PROBE);
@@ -811,7 +964,10 @@ void Sensors::calibrate(uint8_t sensorID, int val)
       myWaterEC.calibrate_high(12880);
     }
   }
-  else if ((sensorID == 4) && sensor_water_temperature && (water_temperature > -900)) //RTC
+  else
+#endif
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
+  if ((sensorID == 4) && sensor_water_temperature && (water_temperature > -900)) //RTC
   {
     check++;
     p_myLCD->println(TXT_PUT_THE_PROBE);
@@ -819,7 +975,10 @@ void Sensors::calibrate(uint8_t sensorID, int val)
     wait();
     myWaterTempRTD.calibrate();
   }
-  else if ((sensorID == 5) && sensor_water_orp  && (water_orp < 1000)) //ORP
+  else
+#endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
+  if ((sensorID == 5) && sensor_water_orp  && (water_orp < 1000)) //ORP
   {
     check++;
     p_myLCD->println(TXT_PUT_THE_PROBE);
@@ -828,7 +987,10 @@ void Sensors::calibrate(uint8_t sensorID, int val)
     wait();
     myWaterORP.calibrate();
   }
-  else if (sensorID == 6 &&  sensor_air_CO2) //CO2
+  else
+#endif
+#ifdef SENSOR_TYPE_CO2_SENSOR
+  if (sensorID == 6 &&  sensor_air_CO2) //CO2
   {
     check++;
     myi2cuart.pinMode(1, OUTPUT);    //set up for the calibration pin.
@@ -836,16 +998,26 @@ void Sensors::calibrate(uint8_t sensorID, int val)
     delay(10000);                  //5+ sec needed for the calibration process
     myi2cuart.digitalWrite(1, HIGH);
   }
-  else if (sensorID == 7 && sensor_air_CO  ) //CO
+  else
+#endif
+#ifdef SENSOR_TYPE_CO_SENSOR
+  if (sensorID == 7 && sensor_air_CO  ) //CO
   {
     check++;
     myCO.doCalibrate();
   }
-  else if (sensorID == 8 && sensor_water_level == 1) //Ultrasound
+  else
+#endif
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
+  if (sensorID == 8 && sensor_water_level == 1) //Ultrasound
   {
     check++;
     myWaterlevel.Calibration();
   }
+#endif
+  {
+  }
+
   reset();
 
   //Check if calibration worked

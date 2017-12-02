@@ -17,7 +17,7 @@
   along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "WaterORP.h"
-
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
 /**
  * \fn void WaterORP::init(void)
  * \brief initialize the water ORP sensor
@@ -66,3 +66,4 @@ void WaterORP::clearCalibration(void)
 {
   myEZO.sendCommand(WATER_DO_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
+#endif

@@ -29,6 +29,8 @@
 #include "WProgram.h"
 #endif
 
+#include "SensorTypes.h"
+
 //Device Address
 
 //A:VDD
@@ -160,7 +162,6 @@ class SC16IS750 : public Stream
     uint8_t peek_flag;
 
 };
-
 #endif
 
 

@@ -18,6 +18,7 @@
 */
 #include "Waterlevel.h"
 
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
 Waterlevel::Waterlevel() {
   Wire.begin();
 }
@@ -59,3 +60,5 @@ void Waterlevel::Calibration(){
   Wire.endTransmission(); // Arreter la transmission
   Wire.requestFrom(WATER_LEVEL_ADDR, 0);
 }
+
+#endif

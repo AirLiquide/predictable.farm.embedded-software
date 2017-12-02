@@ -51,7 +51,6 @@ bool EZO::readData(char addr)
     {
       Serial.print("EZO Data:");
       Serial.println(EZO_data);
-
     }
 #endif
   } else {

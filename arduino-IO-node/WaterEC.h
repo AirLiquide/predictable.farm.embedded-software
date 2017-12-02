@@ -20,6 +20,7 @@
 #define __WATEREC_H__
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
 #include "EZOCircuit.h"
 
 class WaterEC
@@ -36,6 +37,6 @@ class WaterEC
     EZO myEZO ;
     //float ec;
 };
-
+#endif
 #endif
 

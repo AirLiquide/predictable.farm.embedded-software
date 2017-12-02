@@ -27,6 +27,7 @@
 
 #include <Wire.h>
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
 
 typedef union float2bytes_t   // union consists of one variable represented in a number of different ways
 {
@@ -41,5 +42,5 @@ class Waterlevel
     float getDistance();
     void Calibration();
 };
-
+#endif 
 #endif

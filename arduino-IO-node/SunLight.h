@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 #include "SensorTypes.h"
-
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
 /*------------------------------------------------------//
   Registers,Parameters and commands
 
@@ -183,7 +183,7 @@ class SunLight {
 };
 
 
-
+#endif /*SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR*/
 #endif
 
 

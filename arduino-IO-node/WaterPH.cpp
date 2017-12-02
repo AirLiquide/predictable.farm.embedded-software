@@ -17,7 +17,7 @@
   along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "WaterPh.h"
-
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
 /**
  * \fn void WaterPH::init()
  * \brief initialize the water pH sensor
@@ -89,3 +89,4 @@ void WaterPH::clearCalibration()
 {
   myEZO.sendCommand(WATER_PH_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
+#endif

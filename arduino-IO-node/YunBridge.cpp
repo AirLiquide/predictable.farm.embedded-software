@@ -43,6 +43,7 @@ void YunBridge::init()
 void YunBridge::sendJSON(char * sensorName, char * data)
 {
   char message[40];
+
   sprintf(message, "{\"t\":\"%s\",\"v\":\"%s\"}", sensorName, data);
   Serial1.println(message);
 }
@@ -59,7 +60,7 @@ void YunBridge::sendInteger(char * sensorName, unsigned int data)
 {
   if (linuxReady && networkReady) {
     char message[10];
-    sprintf(message,"%d",data);
+    sprintf(message, "%d", data);
     sendJSON(sensorName, message);
   }
 }
@@ -76,7 +77,7 @@ void YunBridge::sendFloat(char * sensorName, float data)
 {
   if (linuxReady && networkReady) {
     char message[10];
-    sprintf(message,"%d.%02d", (int)data, (int)(data*100)%100);
+    sprintf(message, "%d.%02d", (int)data, (int)(data * 100) % 100);
     sendJSON(sensorName, message);
   }
 }

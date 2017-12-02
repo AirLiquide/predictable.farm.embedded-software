@@ -20,6 +20,7 @@
 #define __WATERORP_H__
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
 #include "EZOCircuit.h"
 
 class WaterORP
@@ -34,5 +35,5 @@ class WaterORP
     EZO myEZO ;
     //float orp;
 };
-
+#endif
 #endif

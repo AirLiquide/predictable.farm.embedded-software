@@ -20,6 +20,7 @@
 #define __WATERDO_H__
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
 #include "EZOCircuit.h"
 
 class WaterDO
@@ -37,5 +38,5 @@ class WaterDO
     EZO myEZO;
     //float dissolved_oxygen;
 };
-
+#endif
 #endif

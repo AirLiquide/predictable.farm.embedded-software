@@ -17,7 +17,7 @@
   along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "WaterTempRTD.h"
-
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
 /**
  * \fn void WaterTempRTD::init(void)
  * \brief initialize the water temp sensor
@@ -66,3 +66,4 @@ void WaterTempRTD::clearCalibration()
 {
   myEZO.sendCommand(WATER_TEMPERATURE_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
+#endif

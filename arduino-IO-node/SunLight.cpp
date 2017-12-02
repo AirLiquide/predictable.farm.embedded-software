@@ -30,7 +30,7 @@
 
 #include "SunLight.h"
 #include "Wire.h"
-
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
 /*--------------------------------------------------------//
   default init
 
@@ -231,7 +231,7 @@ uint16_t SunLight::ReadUV(void)
 {
   return (ReadHalfWord(SUNLIGHT_AUX_DATA0_UVINDEX0));
 }
-
+#endif /*SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR*/
 
 
 

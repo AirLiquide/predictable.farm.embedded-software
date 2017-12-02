@@ -21,9 +21,13 @@
 #include "WProgram.h"
 #endif
 
-#include <Wire.h>
 
 #include "Barometer.h"
+
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
+
+#include <Wire.h>
+
 
 static uint8_t i2cread(void) {
   uint8_t x;
@@ -168,3 +172,5 @@ void Barometer::getPT(float *P, float *T) {
   *T = ((float) temp - 498.0F) / -5.35F + 25.0F;          // C
 
 }
+
+#endif

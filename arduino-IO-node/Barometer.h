@@ -13,12 +13,20 @@
 */
 /**************************************************************************/
 
+#ifndef _BAROMETER_H_
+#define _BAROMETER_H_
+
 #if ARDUINO >= 100
  #include "Arduino.h"
 #else
  #include "WProgram.h"
 #endif
 
+
+#include "SensorTypes.h"
+
+
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
 #include <Wire.h>
 
 /*=========================================================================
@@ -61,3 +69,7 @@ class Barometer{
 
   void readCoefficients(void);
 };
+
+#endif
+
+#endif /*_BAROMETER_H_*/

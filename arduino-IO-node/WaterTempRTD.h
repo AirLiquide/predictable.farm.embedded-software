@@ -20,6 +20,7 @@
 #define __WATERTEMPRTD_H__
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
 #include "EZOCircuit.h"
 
 class WaterTempRTD
@@ -34,6 +35,6 @@ class WaterTempRTD
   private:
     EZO myEZO;
 };
-
+#endif
 #endif
 

@@ -29,6 +29,11 @@
 #ifndef SHTSENSOR_H
 #define SHTSENSOR_H
 
+#include "SensorTypes.h"
+
+
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
 
 // Forward declaration
 class SHTSensorDriver;
@@ -149,5 +154,5 @@ private:
                           uint8_t dataLength);
 };
 
-
+#endif
 #endif /* SHTSENSOR_H */

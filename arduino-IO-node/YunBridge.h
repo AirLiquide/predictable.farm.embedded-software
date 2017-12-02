@@ -39,6 +39,7 @@
 #define BRIDGE_NETWORK     'n'
 #define BRIDGE_OS          'o'
 #define BRIDGE_DEVICE      'i'
+#define BRIDGE_ACK      "ACK"
 #define BRIDGE_OS_DOWN      0
 #define BRIDGE_OS_UP        1
 #define BRIDGE_NETWORK_DOWN    0

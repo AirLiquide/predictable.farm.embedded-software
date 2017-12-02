@@ -16,6 +16,7 @@
 
 #include "CO2.h"
 
+#ifdef SENSOR_TYPE_CO2_SENSOR
 uint8_t CO2::cmd_measure[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
 
 CO2::init(Stream *stream)
@@ -98,5 +99,7 @@ int32_t CO2::getppm() {
     return -1;
   }
 }*/
+
+#endif
 
 

@@ -23,6 +23,10 @@
 #include "WProgram.h"
 #endif
 
+#include "SensorTypes.h"
+
+#ifdef SENSOR_TYPE_CO2_SENSOR
+
 #define CO2_SENSOR_BAUDRATE 9600
 class CO2 {
   public:
@@ -38,4 +42,5 @@ class CO2 {
     void    sendcommand    (uint8_t *pcommand);
     uint8_t checksum_valid (uint8_t *pbuf);
 };
+#endif
 #endif

@@ -18,6 +18,8 @@
 */
 #include "WaterDO.h"
 
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+
 /**
  * \fn void WaterDO::init()
  * \brief initialize the water DO sensor
@@ -113,3 +115,4 @@ void WaterDO::clearCalibration()
 {
   myEZO.sendCommand(WATER_DO_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
+#endif

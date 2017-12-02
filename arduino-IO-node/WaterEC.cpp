@@ -17,7 +17,7 @@
   along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "WaterEC.h"
-
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
 /**
  * \fn void WaterEC::init()
  * \brief initialize the water EC sensor
@@ -112,3 +112,4 @@ void WaterEC::clearCalibration()
 {
   myEZO.sendCommand(WATER_EC_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
+#endif

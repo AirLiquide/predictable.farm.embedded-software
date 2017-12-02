@@ -31,7 +31,7 @@
 #include <Arduino.h>
 #include "SHTSensor.h"
 
-
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
 //
 // class SHTI2cSensor
 //
@@ -215,3 +215,5 @@ void SHTSensor::cleanup()
     mSensor = NULL;
   }
 }
+
+#endif

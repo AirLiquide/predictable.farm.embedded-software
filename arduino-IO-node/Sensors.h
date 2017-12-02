@@ -29,23 +29,43 @@
 #include <Wire.h>
 
 #include "SensorTypes.h"
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
 #include "Barometer.h"
+#endif
+#ifdef SENSOR_TYPE_CO2_SENSOR
 #include "CO2.h"
+#endif
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
 #include "WaterTempRTD.h"
+#endif
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
 #include "WaterPH.h"
+#endif
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
 #include "WaterEC.h"
+#endif
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
 #include "WaterDO.h"
+#endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
 #include "WaterORP.h"
+#endif
 #include "SC16IS750.h"
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
 #include "SHTSensor.h"
+#endif
+#ifdef SENSOR_TYPE_CO_SENSOR
 #include "MutichannelGasSensor.h"
+#endif
 #include "Adafruit_ADS1015.h"
 #include "Relay.h"
 #include "LCD.h"
 #include "YunBridge.h"
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
 #include "Waterlevel.h"
-
-#ifdef LOW_COST_SUNLIGHT_SENSOR
+#endif
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
     #include "SunLight.h"
 #endif
 
@@ -77,48 +97,91 @@ class Sensors
     void printOk();
 
     //uint8_t actuator_relay;
-    uint8_t sensor_water;
+    uint8_t sensor_item;
 
+
+#ifdef SENSOR_TYPE_PAR_SENSOR
     uint8_t sensor_light_par;
-    uint8_t sensor_light_uv;
-    uint8_t sensor_air_temperature;
-    uint8_t sensor_air_pressure;
-    uint8_t sensor_air_relative_humidity;
-    uint8_t sensor_air_CO;
-    uint8_t sensor_air_CO2;
-    uint8_t sensor_soil_temperature;
-    uint8_t sensor_soil_moisture;
-    uint8_t sensor_water_temperature;
-    uint8_t sensor_water_ph;
-    uint8_t sensor_water_ec;
-    uint8_t sensor_water_do;
-    uint8_t sensor_water_orp;
-    uint8_t sensor_water_level;
-
     float light_par;
-    float light_uv;
-    float soil_temperature;
-    float soil_moisture;
-    float water_temperature;
-    float air_temperature;
-    float air_pressure;
-    float air_CO2;
-    float air_CO;
-    float water_ec;
-    float water_ph;
-    float water_do;
-    float water_orp;
-    float water_level;
+#endif   
 
+#ifdef SENSOR_TYPE_UV_SENSOR
+    uint8_t sensor_light_uv;
+    float light_uv;
+#endif    
+
+#ifdef SENSOR_TYPE_AIR_TEMPERATURE_SENSOR
+    uint8_t sensor_air_temperature;
+    float air_temperature;
+#endif    
+
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
+    uint8_t sensor_air_pressure;
+    float air_pressure;
+#endif    
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
+    uint8_t sensor_air_relative_humidity;
+#endif
+
+#ifdef SENSOR_TYPE_CO_SENSOR
+    uint8_t sensor_air_CO;
+    float air_CO;
+#endif
+
+#ifdef SENSOR_TYPE_CO2_SENSOR
+    uint8_t sensor_air_CO2;
+    float air_CO2;
+#endif    
+#ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
+    uint8_t sensor_soil_temperature;
+    float soil_temperature;
+#endif    
+
+#ifdef SENSOR_TYPE_SOIL_MOISTURE_SENSOR
+    uint8_t sensor_soil_moisture;
+    float soil_moisture;
+#endif   
+
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
+    uint8_t sensor_water_temperature;
+    float water_temperature;
+#endif
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
+    uint8_t sensor_water_ph;
+    float water_ph;
+#endif   
+
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
+    uint8_t sensor_water_ec;
+    float water_ec;
+#endif  
+
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
+    uint8_t sensor_water_do;
+    float water_do;
+#endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
+    uint8_t sensor_water_orp;
+    float water_orp;
+#endif
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
+    uint8_t sensor_water_level;
+    float water_level;
+#endif
+
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
     //values humidity sensor
     SHTSensor myHum;
-
+#endif
     //Values for the ADC with temp, uv, wms, jyp1000
     Adafruit_ADS1115 myAdc;
 
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
     Barometer myBarometer;
-
-#ifdef LOW_COST_SUNLIGHT_SENSOR
+#endif
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
     uint8_t sensor_light_lux;
     float light_lux;
     uint8_t sensor_light_uv;
@@ -126,23 +189,34 @@ class Sensors
     SunLight mySunLightSensor;
 #endif
 
+#ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
     Waterlevel myWaterlevel;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
     WaterTempRTD myWaterTempRTD;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_PH_SENSOR
     WaterPH myWaterPH;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_EC_SENSOR
     WaterEC myWaterEC;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_ORP_SENSOR
     WaterORP myWaterORP;
-
+#endif
+#ifdef SENSOR_TYPE_WATER_DO_SENSOR
     WaterDO myWaterDO;
-
+#endif
+#ifdef SENSOR_TYPE_CO2_SENSOR
     CO2 myCO2;
+#endif
+
     SC16IS750 myi2cuart;
 
+#ifdef SENSOR_TYPE_CO_SENSOR
     MutichannelGasSensor myCO;
+#endif
 
 };
 
-#endif
+#endif /*__SENSORS_H__*/
