@@ -65,11 +65,11 @@ void setup()
   Serial.begin(9600);
   Wire.begin();
 
-//#ifdef DEBUG_YUN
+#ifdef DEBUG_YUN
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-//#endif
+#endif
 
   // initialize classes
   bridge.init();
