@@ -271,7 +271,7 @@ void  Sensors::detect()
           Serial.print("T");
           Serial.println((unsigned long)essay);
 #endif
-          if (((unsigned long)essay != 65535) && ((unsigned long)essay > 20)) {//temp , don't forget to pull down with ground line while not connected
+          if (essay != 0 ) {//temp , don't forget to pull down with ground line while not connected
             p_myLCD->DispStringAt(SOIL_TEMPERATURE_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
             soil_temperature = 0;
@@ -280,31 +280,33 @@ void  Sensors::detect()
 #endif
 
 #ifdef SENSOR_TYPE_PAR_SENSOR
-
           essay = myAdc.readADC_SingleEnded(3);
-//#ifdef DEBUG
-
+#ifdef DEBUG
           Serial.print("PAR");
-          Serial.println((unsigned long)essay);
-//#endif
-          if ( ( (unsigned long)essay < 65517) /*&& ((unsigned long)essay != 0) */) { //PAR, don't forget to pull down with ground line while not connected
+          Serial.println(essay);
+#endif
+          if ((unsigned long)essay != 0) { //PAR, don't forget to pull down with ground line while not connected
             p_myLCD->DispStringAt(LIGHT_PAR_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
-
-            sensor_light_par = 1 ;
-          }
-          
+            sensor_light_par = 1 ; 
           //Serial.print(sensor_light_par);
+          }
 #endif
 #ifdef SENSOR_TYPE_UV_SENSOR
-          if (myAdc.readADC_SingleEnded(0) < 7950) { //UV, don't forget to pull down with ground line while not connected
+          essay = myAdc.readADC_SingleEnded(0);
+#ifdef DEBUG
+          Serial.print("UV");
+          Serial.println(essay);
+#endif
+          if (essay != 0) { //UV, don't forget to pull down with ground line while not connected
             p_myLCD->DispStringAt(LIGHT_UV_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
             sensor_light_uv = 1;
           }
 #endif
 #ifdef SENSOR_TYPE_MOISTURE_SENSOR
-          if (myAdc.readADC_SingleEnded(1) > 3000) { // MOISTURE , don't forget to pull down with ground line while not connected
+          essay = myAdc.readADC_SingleEnded(1);
+          if (essay != 0) { // MOISTURE , don't forget to pull down with ground line while not connected
             sensor_soil_moisture = 1;
             p_myLCD->DispStringAt(SOIL_MOISTURE_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
             printOk();
@@ -430,7 +432,7 @@ void Sensors::printOk() {
    \return n/a
 
 */
-void Sensors::printinfo (char* sensorName, double sensorValue, uint8_t sensorPrecision, char * sensorUnit)
+void Sensors::printinfo (char* sensorName, float sensorValue, uint8_t sensorPrecision, char * sensorUnit)
 {
 
 #ifdef DEBUG
@@ -438,15 +440,16 @@ void Sensors::printinfo (char* sensorName, double sensorValue, uint8_t sensorPre
   Serial.print(sensorValue, sensorPrecision);
   Serial.println(sensorUnit);
 #endif
-  if (lcdLine < 50 ) {
-    if ((lcdLine - scrolling) >= 0) {
-      p_myLCD->DispStringAt(sensorName, 0, (lcdLine - scrolling) * ROW_OFFSET);
-      p_myLCD->print(sensorValue, sensorPrecision);
-      p_myLCD->print(sensorUnit);
-      p_myLCD->print("    ");
-
+  if (isnan(sensorValue) != 1){
+   if (lcdLine < 50 ) {
+     if ((lcdLine - scrolling) >= 0) {
+        p_myLCD->DispStringAt(sensorName, 0, (lcdLine - scrolling) * ROW_OFFSET);
+        p_myLCD->print(sensorValue, sensorPrecision);
+        p_myLCD->print(sensorUnit);
+        p_myLCD->print("    ");
+     }
+     lcdLine++;
     }
-    lcdLine++;
   }
 }
 
@@ -463,7 +466,8 @@ void Sensors::printinfo (char* sensorName, double sensorValue, uint8_t sensorPre
 */
 void Sensors::update(uint8_t menu)
 {
-
+  unsigned short ADCvalue;
+  bool bool_water;
   uint8_t check = 0;
   if (menu == 0 || menu == 6) {
     lcdLine = 0;
@@ -471,13 +475,16 @@ void Sensors::update(uint8_t menu)
     lcdLine = 50;
   }
 
-  bool bool_water;
-
   
 #ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
   if (sensor_water_level && sensor_item == _item_water_level) { //DEPTH with ultrasound
     //Serial.print("water level");
     water_level = myWaterlevel.getDistance();
+
+#ifdef DEBUG  
+    Serial.print("Water lvl:");
+    Serial.println(water_level);
+#endif
 
     //Print the info
     printinfo ( WATER_LEVEL_DNAME, water_level, 0, WATER_LEVEL_UNIT);
@@ -493,7 +500,12 @@ void Sensors::update(uint8_t menu)
   if ( sensor_air_pressure /*&& sensor_item == _item_air_pressure*/ ) {//BAROMETER OK - TEMP OK
 
     myBarometer.getPT(&air_pressure, &air_temperature);
-
+#ifdef DEBUG  
+    Serial.print("P:");
+    Serial.println(air_pressure);
+    Serial.print("Air Temp:");
+    Serial.println(air_temperature);
+#endif
     //Print the info
     printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, air_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
     printinfo ( AIR_PRESSURE_MEASUREMENT_DNAME, air_pressure, 0, AIR_PRESSURE_MEASUREMENT_UNIT);
@@ -511,18 +523,24 @@ void Sensors::update(uint8_t menu)
 #ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
   //p_myLCD->CleanAll(WHITE);
   if ( sensor_air_relative_humidity /*&& sensor_item == _item_air_relative_humidity */) { //HUMIDITY OK - TEMP INPRECISE
-    
     if (myHum.readSample())
     {
       check++;
       //Print humidity
       printinfo ( AIR_HUMIDITY_LEVEL_MEASUREMENT_DNAME, myHum.mHumidity, 1, AIR_HUMIDITY_LEVEL_MEASUREMENT_UNIT);
       p_myBridge->sendFloat( AIR_HUMIDITY_LEVEL_MEASUREMENT_NNAME, myHum.mHumidity);
-
+#ifdef DEBUG  
+    Serial.print("RH:");
+    Serial.println(myHum.mHumidity);
+#endif
 #if not defined(SENSOR_TYPE_PRESSURE_SENSOR ) && defined (SENSOR_TYPE_AIR_TEMPERATURE_SENSOR) && defined(SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR)
       //use the temp of this sensor if there is no other
       if (!(sensor_air_pressure))
       {
+#ifdef DEBUG  
+    Serial.print("Air Temp:");
+    Serial.println(myHum.mTemperature);
+#endif
         printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, myHum.mTemperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
         p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, myHum.mTemperature);
       }
@@ -535,9 +553,11 @@ void Sensors::update(uint8_t menu)
 #ifdef SENSOR_TYPE_CO_SENSOR
   if ( sensor_air_CO /*&& sensor_item == _item_air_CO */) { //CO OK
     check++;
-    //Serial.print("co");
     air_CO = myCO.measure_CO();
-
+#ifdef DEBUG  
+    Serial.print("CO:");
+    Serial.println(air_CO);
+#endif
     //FIX ME : ajouter une deuxieme valeur de verification
     /*if(air_CO==-1){
       sensor_air_CO=0;
@@ -558,11 +578,9 @@ void Sensors::update(uint8_t menu)
 
 #ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
   if ( sensor_soil_temperature /*&& sensor_item == _item_soil_temperature*/) {//ADC - TEMP OK
-    check++;
-
-    soil_temperature = myAdc.readADC_SingleEnded(2) ;
+    ADCvalue = myAdc.readADC_SingleEnded(2) ;
     #if 0
-    long tmpval = long(soil_temperature);
+    long tmpval = (long)ADCvalue;
     tmpval = tmpval * 100 / 16 ;
     Serial.println(tmpval);
     tmpval = (tmpval * 4755) / (250000 - tmpval);
@@ -573,27 +591,36 @@ void Sensors::update(uint8_t menu)
     tmpval = tmpval / 10000;
     soil_temperature = ((float)tmpval)/10.0;
     #else
-    soil_temperature = myAdc.readADC_SingleEnded(2) ;
-    soil_temperature = soil_temperature * 0.0000625;
-    soil_temperature = soil_temperature * 4755 / (2.5 - soil_temperature);
+    soil_temperature = (float)ADCvalue * 0.0000625;
+    soil_temperature = soil_temperature * 4755.0 / (2.5 - soil_temperature);
     soil_temperature = -0.00232 * (soil_temperature) + 17.59246;
     soil_temperature = sqrt(soil_temperature);
     soil_temperature = -(soil_temperature - 3.908) / 0.00116;
     #endif
+#ifdef DEBUG  
+    Serial.print("Soil Temp:");
+    Serial.print(ADCvalue);
+    Serial.print("/");
     Serial.println(soil_temperature);
-    if (isnan(soil_temperature) != 1){
+#endif
    // Serial.println(soil_temperature);
+    check++;
     printinfo (SOIL_TEMPERATURE_MEASUREMENT_DNAME, soil_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
     p_myBridge->sendFloat( SOIL_TEMPERATURE_MEASUREMENT_NNAME, soil_temperature);
-
-    }
   }
 #endif
 
 #ifdef SENSOR_TYPE_PAR_SENSOR
   if (sensor_light_par /*&& sensor_item == _item_light_PAR*/) {//ADC - JYP OK
-    light_par = myAdc.readADC_SingleEnded(3) * 0.0078125 * 99.7;
+    ADCvalue = myAdc.readADC_SingleEnded(3);
+    light_par = (float)ADCvalue * 0.77890625 ; /*0.0078125 * 99.7 = 0.77890625 */
     if ((unsigned long)light_par > 51000) light_par = 0.0f;
+#ifdef DEBUG  
+    Serial.print("PAR:");
+    Serial.print(ADCvalue);
+    Serial.print("/");
+    Serial.println(light_par);
+#endif
     check++;
     printinfo (LIGHT_PAR_MEASUREMENT_DNAME, light_par, 1, LIGHT_PAR_MEASUREMENT_UNIT);
     p_myBridge->sendFloat( LIGHT_PAR_MEASUREMENT_NNAME, light_par);
@@ -602,21 +629,37 @@ void Sensors::update(uint8_t menu)
 
 #ifdef SENSOR_TYPE_UV_SENSOR
   if (sensor_light_uv /* && sensor_item == _item_light_UV*/) {//ADC - UV
-    light_uv = myAdc.readADC_SingleEnded(0) * 0.0078125 * 5;
-    // if ((int)light_uv < 1225 && (int)light_uv > 5 ) { // FIXME move to detec
+    ADCvalue = myAdc.readADC_SingleEnded(0);
+    light_uv = (float) ADCvalue* 0.0390625 ; /* 0.0078125 * 5.0 = 0,0390625 */
+#ifdef DEBUG  
+    Serial.print("UV:");
+    Serial.print(ADCvalue);
+    Serial.print("/");
+    Serial.println(light_uv);
+#endif
+    if ((int)light_uv > 1224 || (int)light_uv < 6 ) {
+      light_uv = 0;
+    }
     check++;
     //      if ((int)val_tamp < 100) p_myLCD->BacklightConf(LOAD_TO_RAM, 20);             TO DEAL WITH
     //      else p_myLCD->BacklightConf(LOAD_TO_RAM, 100);
-    printinfo (LIGHT_UV_MEASUREMENT_DNAME, light_uv, 1, LIGHT_PAR_MEASUREMENT_UNIT);
+    printinfo (LIGHT_UV_MEASUREMENT_DNAME, light_uv, 1, LIGHT_PAR_MEASUREMENT_UNIT /* this sensor sens PPF value , not a UV index*/);
     p_myBridge->sendFloat( LIGHT_UV_MEASUREMENT_NNAME, light_uv);
-    // }
+    
 
   }
 #endif
   
 #ifdef SENSOR_TYPE_SOIL_MOISTURE_SENSOR
-  if (sensor_soil_moisture && sensor_item == _item_soil_moisture) {//ADC - WMS
-    soil_moisture = (myAdc.readADC_SingleEnded(1) * 0.000125 * 239) / 2, 8;
+  if (sensor_soil_moisture /*&& sensor_item == _item_soil_moisture*/) {//ADC - WMS
+    ADCvalue = myAdc.readADC_SingleEnded(1);
+    soil_moisture = (float)(ADCvalue * 0.029875 ) / 2.8; /* 0.000125 * 239.0 = 0,029875*/
+#ifdef DEBUG  
+    Serial.print("MOIST:");
+    Serial.print(ADCvalue);
+    Serial.print("/");
+    Serial.println(soil_moisture);
+#endif
     printinfo (SOIL_MOISTURE_MEASUREMENT_DNAME, soil_moisture, 1, SOIL_MOISTURE_MEASUREMENT_UNIT);
     p_myBridge->sendFloat( SOIL_MOISTURE_MEASUREMENT_NNAME, soil_moisture);
   }
@@ -654,6 +697,10 @@ void Sensors::update(uint8_t menu)
       if (bool_water == false) sensor_water_do = 0;
       else {
         water_do = atof(myEZO.getData());
+#ifdef DEBUG  
+    Serial.print("Water DO:");
+    Serial.println(water_do);
+#endif
         p_myBridge->sendFloat( WATER_DO_MEASUREMENT_NNAME, water_do);
         //sensor_water++;
         //sensor_water++;
@@ -670,6 +717,10 @@ void Sensors::update(uint8_t menu)
       if (bool_water == false) sensor_water_ec = 0;
       else {
         water_ec = atof(myEZO.getData());
+#ifdef DEBUG  
+    Serial.print("Water EC:");
+    Serial.println(water_ec);
+#endif
         p_myBridge->sendFloat( WATER_EC_MEASUREMENT_NNAME, water_ec);
         //sensor_water++;
       }
@@ -686,6 +737,10 @@ void Sensors::update(uint8_t menu)
       if (bool_water == false) sensor_water_ph = 0;
       else {
         water_ph = atof(myEZO.getData());
+#ifdef DEBUG  
+    Serial.print("Water PH:");
+    Serial.println(water_ph);
+#endif
         p_myBridge->sendFloat( WATER_PH_MEASUREMENT_NNAME, water_ph);
         //sensor_water++;
       }
@@ -704,6 +759,10 @@ void Sensors::update(uint8_t menu)
       if (bool_water == false) sensor_water_temperature = 0;
       else {
         water_temperature = atof(myEZO.getData());
+#ifdef DEBUG  
+    Serial.print("Water Temp:");
+    Serial.println(water_temperature);
+#endif
         p_myBridge->sendFloat(WATER_TEMPERATURE_MEASUREMENT_NNAME, water_temperature);
         //sensor_water++;
       }
@@ -717,6 +776,10 @@ void Sensors::update(uint8_t menu)
   if ( sensor_air_CO2 /*&& sensor_item == _item_air_CO2*/) { //CO2
     myCO2.measure();
     check++;
+#ifdef DEBUG  
+    Serial.print("CO2:");
+    Serial.println(myCO2.ppm);
+#endif
     printinfo ( AIR_CO2_MEASUREMENT_DNAME, myCO2.ppm, 0, AIR_CO2_MEASUREMENT_UNIT);
     p_myBridge->sendInteger(AIR_CO2_MEASUREMENT_NNAME, myCO2.ppm);
   }

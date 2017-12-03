@@ -91,7 +91,7 @@ class Sensors
   private:
 
     void reset();
-    void printinfo (char* sensorName, double sensorValue, uint8_t sensorPrecision, char * sensorUnit);
+    void printinfo (char* sensorName, float sensorValue, uint8_t sensorPrecision, char * sensorUnit);
     LCD * p_myLCD;
 
     void printOk();

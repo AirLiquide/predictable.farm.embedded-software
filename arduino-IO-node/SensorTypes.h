@@ -164,6 +164,9 @@
 #ifdef SENSOR_TYPE_SOIL_TEMPERATURE_SENSOR
 #define  SOIL_TEMPERATURE_MEASUREMENT_NNAME     "soil_temperature"
 #define  SOIL_TEMPERATURE_MEASUREMENT_DNAME     "Soil T. :"
+#ifndef TEMPERATURE_MEASUREMENT_UNIT
+#define  TEMPERATURE_MEASUREMENT_UNIT   " C"
+#endif
 #endif
 #ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
 #define  WATER_LEVEL_NNAME                       "water_level"

@@ -42,10 +42,50 @@ void YunBridge::init()
 */
 void YunBridge::sendJSON(char * sensorName, char * data)
 {
-  char message[40];
+  char message[30];
+  //wait for ack
 
   sprintf(message, "{\"t\":\"%s\",\"v\":\"%s\"}", sensorName, data);
   Serial1.println(message);
+
+#ifdef USE_ACK
+  unsigned char timeout = 3;
+  bool msgSent = false;
+  do
+  {
+    timeout--;
+    if (Serial1.available() > 0)
+    {
+      char ack[3];
+      memset(ack, 0, 3);
+      Serial1.readBytes( ack, 3)  ;
+      if (strcmp(ack, BRIDGE_ACK) != 0)
+      {
+        delay(10);
+        msgSent = false;
+#ifdef DEBUG
+        Serial.print("no ack:");
+        Serial.println(ack);
+#endif
+      }
+      else {
+        msgSent = true;
+#ifdef DEBUG
+        Serial.println("ack");
+#endif
+      }
+    }
+    else
+    {
+      delay(10);
+#ifdef DEBUG
+      Serial.println("delayed");
+#endif
+    }
+    if (timeout == 0) return;
+  }
+  while (!msgSent);
+#endif
 }
 
 
@@ -59,9 +99,11 @@ void YunBridge::sendJSON(char * sensorName, char * data)
 void YunBridge::sendInteger(char * sensorName, unsigned int data)
 {
   if (linuxReady && networkReady) {
-    char message[10];
-    sprintf(message, "%d", data);
-    sendJSON(sensorName, message);
+    if (isnan(data) != 1) {
+      char message[10];
+      sprintf(message, "%d", data);
+      sendJSON(sensorName, message);
+    }
   }
 }
 
@@ -76,9 +118,11 @@ void YunBridge::sendInteger(char * sensorName, unsigned int data)
 void YunBridge::sendFloat(char * sensorName, float data)
 {
   if (linuxReady && networkReady) {
-    char message[10];
-    sprintf(message, "%d.%02d", (int)data, (int)(data * 100) % 100);
-    sendJSON(sensorName, message);
+    if (isnan(data) != 1) {
+      char message[10];
+      sprintf(message, "%d.%02d", (int)data, (int)(data * 100) % 100);
+      sendJSON(sensorName, message);
+    }
   }
 }
 
