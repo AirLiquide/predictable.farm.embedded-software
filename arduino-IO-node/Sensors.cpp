@@ -435,11 +435,11 @@ void Sensors::printOk() {
 void Sensors::printinfo (char* sensorName, float sensorValue, uint8_t sensorPrecision, char * sensorUnit)
 {
 
-#ifdef DEBUG
+//#ifdef DEBUG
   Serial.print(sensorName);
   Serial.print(sensorValue, sensorPrecision);
   Serial.println(sensorUnit);
-#endif
+//#endif
   if (isnan(sensorValue) != 1){
    if (lcdLine < 50 ) {
      if ((lcdLine - scrolling) >= 0) {

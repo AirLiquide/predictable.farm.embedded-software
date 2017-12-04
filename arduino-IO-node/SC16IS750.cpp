@@ -23,7 +23,6 @@
 //#define SC16IS750_DEBUG_PRINT
 #include "SC16IS750.h"
 
-#include <Wire.h>
 
 #ifdef __AVR__
 #define WIRE Wire

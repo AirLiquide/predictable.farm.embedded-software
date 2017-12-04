@@ -21,8 +21,8 @@
 extern GUI_Bitmap_t bmClock;
 LCD my_LCD;
 uint8_t curs1 = 1;//position of the cursor
-int point = 0; //precision of the calibration
-int select = 0;
+uint8_t point = 0; //precision of the calibration
+uint8_t select = 0;
 
 //#define ALLOW_I2C_DEVICE_SCAN_AFTER_POWERON
 
@@ -427,7 +427,11 @@ void Menu::mainMenu()
   else p_myLCD->print(".");
   p_myLCD->CharGotoXY(14 * CHAR_OFFSET, 0);
   p_myLCD->print("ID:");
-  p_myLCD->print(p_mySensors->p_myBridge->deviceID);
+  if (p_mySensors->p_myBridge->deviceID) {
+    p_myLCD->print(p_mySensors->p_myBridge->deviceID);
+  } else {
+    p_myLCD->print("- ");
+  }
 
 
   if (_menu_item._item_show != 0) {

@@ -30,6 +30,8 @@
 #define SHTSENSOR_H
 
 #include "SensorTypes.h"
+#include <Wire.h>
+#include <Arduino.h>
 
 
 

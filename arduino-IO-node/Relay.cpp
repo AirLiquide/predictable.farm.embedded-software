@@ -156,7 +156,7 @@ void Relay::updateState()
   Wire.beginTransmission(relay_addr);
   Wire.write(0x00);// output register
   Wire.endTransmission();
-  Wire.requestFrom(relay_addr, 1);
+  Wire.requestFrom(relay_addr, (uint8_t)1);
 
   raw = Wire.read();
 

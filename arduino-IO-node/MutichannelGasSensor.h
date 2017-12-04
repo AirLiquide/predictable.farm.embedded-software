@@ -36,6 +36,10 @@
 #ifndef __MUTICHANNELGASSENSOR_H__
 #define __MUTICHANNELGASSENSOR_H__
 
+#include <math.h>
+#include <Wire.h>
+#include <Arduino.h>
+
 #define DEFAULT_I2C_ADDR    0x04
 
 #define ADDR_IS_SET             0           // if this is the first time to run, if 1126, set 

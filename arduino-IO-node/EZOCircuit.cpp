@@ -32,7 +32,7 @@ bool EZO::readData(char addr)
   char i = 0;
 
   // send configuration command in form of text command (Atlas Scientific EZO protocol)
-  Wire.requestFrom(addr, 16, 1);
+  Wire.requestFrom((uint8_t)addr, (uint8_t)16, (uint8_t)1);
   addr = Wire.read();
 
   if (addr == 1) {
@@ -42,9 +42,9 @@ bool EZO::readData(char addr)
       i += 1;
       if (addr == 0) {
         Wire.endTransmission();
+        break;
       }
     }
-    // Serial.println("True");
     return true;
 #ifdef DEBUG
     if (strlen(EZO_data) > 0)

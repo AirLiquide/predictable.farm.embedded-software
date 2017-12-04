@@ -29,6 +29,7 @@
 #include "WProgram.h"
 #endif
 
+#include <Wire.h>
 #include "SensorTypes.h"
 
 //Device Address

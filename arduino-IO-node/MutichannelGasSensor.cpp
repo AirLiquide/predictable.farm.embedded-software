@@ -72,7 +72,7 @@ START:
   Wire.write(addr_reg);
   Wire.endTransmission();    // stop transmitting
 
-  Wire.requestFrom(i2cAddress, 2);
+  Wire.requestFrom(i2cAddress, (uint8_t)2);
 
   unsigned int dta = -1;
 
@@ -139,7 +139,7 @@ test++;
   Wire.write(__dta);
   Wire.endTransmission();    // stop transmitting
 
-  Wire.requestFrom(i2cAddress, 2);
+  Wire.requestFrom(i2cAddress, (uint8_t)2);
 
   long dta = -1;
 

@@ -34,10 +34,10 @@ void YunBridge::init()
 
 
 /**
-   \fn void YunBridge::prepareJSON(char * sensorName)
-   \brief prepare to send sensor status to linux
+   \fn void YunBridge::sendJSON(char * sensorNamen char * data)
+   \brief sends JSON to Linux
 
-   \param sensorName
+   \param sensorName, data
    \return n/a
 */
 void YunBridge::sendJSON(char * sensorName, char * data)
@@ -49,16 +49,16 @@ void YunBridge::sendJSON(char * sensorName, char * data)
   Serial1.println(message);
 
 #ifdef USE_ACK
-  unsigned char timeout = 3;
+  unsigned char timeout = 0;
   bool msgSent = false;
   do
   {
-    timeout--;
+ //   timeout--;
     if (Serial1.available() > 0)
     {
       char ack[3];
       memset(ack, 0, 3);
-      Serial1.readBytes( ack, 3)  ;
+      Serial1.readBytes( ack, sizeof(BRIDGE_ACK+1))  ;
       if (strcmp(ack, BRIDGE_ACK) != 0)
       {
         delay(10);
@@ -82,7 +82,13 @@ void YunBridge::sendJSON(char * sensorName, char * data)
       Serial.println("delayed");
 #endif
     }
-    if (timeout == 0) return;
+    if (timeout == 0)
+    {
+#ifdef DEBUG
+      Serial.println("skip");
+#endif
+      return;
+    }
   }
   while (!msgSent);
 #endif
@@ -90,7 +96,7 @@ void YunBridge::sendJSON(char * sensorName, char * data)
 
 
 /**
-   \fn void YunBridge::sendInteger(char * sensorName, unsigned long  data)
+   \fn void YunBridge::sendInteger(char * sensorName, unsigned int  data)
    \brief sends the status of sensors to linux
 
    \param sensorName, data
@@ -136,7 +142,7 @@ void YunBridge::sendFloat(char * sensorName, float data)
 int YunBridge::getCommand(unsigned char * p_o_command, int * p_o_value)
 {
   char incomingBytes[9]; // 1 + 8
-  int nbRead = 0;
+  uint8_t nbRead = 0;
 #ifdef DEBUG_YUN
   Serial.println(F("Looking for command..."));
 #endif

@@ -171,7 +171,7 @@ uint16_t SunLight::ReadHalfWord(uint8_t Reg)
   Wire.beginTransmission(SUNLIGHT_ADDR);
   Wire.write(Reg);
   Wire.endTransmission();
-  Wire.requestFrom(SUNLIGHT_ADDR, 2);
+  Wire.requestFrom((uint8_t)SUNLIGHT_ADDR, (uint8_t)2);
   Value = Wire.read();
   Value |= (uint16_t)Wire.read() << 8;
   return Value;

@@ -27,8 +27,6 @@
 */
 
 
-#include <Wire.h>
-#include <Arduino.h>
 #include "SHTSensor.h"
 
 #ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR

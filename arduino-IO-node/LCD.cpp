@@ -24,11 +24,6 @@
 
 //#define NOLCD
 
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include "Arduino.h"
-
 
 /*const Font_Info_t fontInfo[LCD_NUM_OF_FONT] =
   {
