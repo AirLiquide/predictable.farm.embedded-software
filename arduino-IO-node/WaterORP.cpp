@@ -52,7 +52,7 @@ void WaterORP::getORP()
  */
 void WaterORP::calibrate(void)
 {
-  myEZO.sendCommand(WATER_DO_MEASUREMENT_ADDR, "cal,225", 300);
+  myEZO.sendCommand(WATER_ORP_MEASUREMENT_ADDR, "cal,225", 300);
 }
 
 /**
@@ -64,6 +64,6 @@ void WaterORP::calibrate(void)
  */
 void WaterORP::clearCalibration(void)
 {
-  myEZO.sendCommand(WATER_DO_MEASUREMENT_ADDR, "Cal,clear", 300);
+  myEZO.sendCommand(WATER_ORP_MEASUREMENT_ADDR, "Cal,clear", 300);
 }
 #endif
