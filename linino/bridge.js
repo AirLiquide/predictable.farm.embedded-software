@@ -1,13 +1,16 @@
-/* Version : 4.0*/
+/* Version : 5.0*/
 
 // /!\ We do not 'use strict' mode here since Node 0.10 does not enable const / let by default.
 
-const DEVICE_ID = 9;
+const VERSION = 5;
+
+const DEVICE_ID = 5;
 
 const SERIAL_PORT = "/dev/ttyATH0"; /*This is the default serial port used internally by the arduino Yun*/
 const SERIAL_BAUDRATE = 115200;
 
-const SERVER_URL = "http://ecf-berlin.predictable.farm";
+const SERVER_URL = "http://lafactory.predictable.zone";
+const UPDATE_ENDPOINT = "http://update.predictablefarm.net/";
 
 /* ---------------------------------------------------------------------- */
 
@@ -16,6 +19,7 @@ function datelog(message) {
 }
 
 const STATUS_REQUEST = "s";
+const INFO_MESSAGE   = "m";
 
 const OS_READY       = "o1"; //"z0";
 const OS_DOWN        = "o0"; //"z1";
@@ -23,6 +27,7 @@ const DEV_PREFIX     = "i";
 const NETWORK_DOWN   = "n0"; //"y0";
 const NETWORK_UP     = "n1"; //"y1";
 const SOCKET_UP      = "n2";
+const ACK            = "ACK";
 
 const SENSOR_TYPES = [
     "relay1",
@@ -47,6 +52,7 @@ const SENSOR_TYPES = [
     "water_level"
 ];
 
+//const MutexPromise = require('mutex-promise');
 const fs = require("fs");
 const exec = require('child_process').exec;
 const serialport = require('/usr/lib/node_modules/serialport');
@@ -61,6 +67,7 @@ var networkStatus = {
 
 var receivedData = false;
 var mcu_ready = false;
+var updateLock = false;
 
 var dataTimer = null; // timer in between two sets of data sent to the server
 var rebootTimer = null; // timer before rebooting after a network down event
@@ -109,6 +116,23 @@ var water_level_cpt = 0;
 
 const ENDL = '\n';
 
+datelog("Starting app v" + VERSION + "...");
+//var mutex = new MutexPromise('sync_write');
+
+function MCU_write(data)
+{
+   /* mutex.lock();
+    
+    // Get a promise that resolves when mutex is unlocked or expired
+    mutex.promise().then(function(mutex){ return arduino.write(data); });
+    
+    // Unlock the mutex
+    mutex.unlock();
+*/
+    arduino.write(data);
+} 
+
+
 datelog("Starting app ...");
 
 datelog(" 1. Opening serial port " + SERIAL_PORT);
@@ -140,11 +164,12 @@ var networkCheck = setInterval(function() {
         sendNetworkStatus();
 
         if (!pingSuccess) {
-            datelog("Scheduling a reboot in 10 minutes ...");
+            datelog("Cannot ping 8.8.8.8, scheduling a reboot in 10 minutes ...");
             rebootTimer = setTimeout(function(){
                 reboot();
             }, 10 * 60 * 1000);
         } else {
+            datelog("Aborting reboot");
             clearTimeout(rebootTimer);
         }
 
@@ -179,31 +204,40 @@ function reset_mcu()
 function sendOsReady()
 {
 //    datelog('Sending OS_READY command');
-    arduino.write(OS_READY + ENDL);
+    MCU_write(OS_READY + ENDL);
 }
 
 function sendOsDown()
 {
     datelog('Sending OS_DOWN command');
-    arduino.write(OS_DOWN + ENDL);
+    MCU_write(OS_DOWN + ENDL);
 }
 
 function sendDeviceId()
 {
     datelog('Sending DEVICE_ID ' + DEVICE_ID);
-    arduino.write(DEV_PREFIX + DEVICE_ID + ENDL);
+    MCU_write(DEV_PREFIX + DEVICE_ID + ENDL);
 }
 
 function sendNetworkStatus()
 {
 //    datelog('Sending NETWORK/SOCKET status');
     if (networkStatus.socket) {
-        arduino.write(SOCKET_UP + ENDL);
+        datelog('Sending SOCKET_UP');
+        MCU_write(SOCKET_UP + ENDL);
     } else if (networkStatus.network) {
-        arduino.write(NETWORK_UP + ENDL);
+        datelog('Sending NETWORK_UP');
+        MCU_write(NETWORK_UP + ENDL);
     } else {
-        arduino.write(NETWORK_DOWN + ENDL);
+        datelog('Sending NETWORK_DOWN');
+        MCU_write(NETWORK_DOWN + ENDL);
     }
+}
+
+function sendACK(data)
+{
+    //datelog('Sending ACK ' + data);
+    //MCU_write(ACK + ENDL);
 }
 
 function exitProcess()
@@ -224,6 +258,48 @@ function reboot()
     })
 }
 
+function launchUpdate()
+{
+    datelog("Launch update");
+
+    // Update bridge file
+    datelog("Replacing bridge");
+    exec('mkdir -p /root/backup', function() {
+        exec('mv /root/bridge.js /root/backup/bridge.backup.' + (Date.now()) + '.js', function() {
+            exec('mv /root/update/bridge.js /root/bridge.js', function() {
+                // Update INO file
+                datelog("Merging sketch with bootloader");
+                exec('merge-sketch-with-bootloader.lua /root/update/update.ino.hex', function() {
+                    datelog("Flashing sketch");
+                    exec('run-avrdude /root/update/update.ino.hex', function(){
+                        reset_mcu();
+                        setTimeout(function(){
+                            // We give 30 secs before it can be updated again, just to avoid race conditions if
+                            // socket messages are received twice.
+                            updateLock = false;
+                        }, 30 * 1000);
+                        reboot();
+                    })
+                })
+            })
+        })
+    })
+}
+
+function retrieveUpdateFiles()
+{
+    datelog("Retrieve update files");
+    exec('rm -fr /root/update && mkdir -p /root/update', function () {
+        exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "update.ino.hex", function() {
+            exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "bridge.js", function() {
+                exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "bridge.service", function() {
+                    launchUpdate();
+                });
+            });
+        });
+    });
+}
+
 /*
         SOCKET EVENTS
 */
@@ -239,6 +315,26 @@ socket.on('connect', function() {
     networkStatus.network = true;
     networkStatus.socket = true;
     sendNetworkStatus();
+
+});
+
+socket.on('update', function(newVersion) {
+
+    // If the new version is not really new
+    if (parseInt(newVersion) <= VERSION) {
+        datelog("Aborted update because v" + newVersion + " is not new enough");
+        return;
+    }
+
+    if (updateLock) {
+        datelog("Aborted update because an update is already in progress");
+        return;
+    }
+
+    updateLock = true;
+
+    // Retrieve new files : bridge.js, bridge.service and .hex file
+    retrieveUpdateFiles();
 
 });
 
@@ -291,7 +387,7 @@ socket.on('sensor-receive', function(d) {
                     return;
                 }
                 var acmd = "a" + value.toString();
-                arduino.write(acmd + ENDL);
+                MCU_write(acmd + ENDL);
             } else if (command.sensor_type == "relay2") {
                 if((state.toString() == relay2_state) )
                 {
@@ -300,7 +396,7 @@ socket.on('sensor-receive', function(d) {
                     return;
                 }
                 var acmd = "b" + value.toString();
-                arduino.write(acmd + ENDL);
+                MCU_write(acmd + ENDL);
             } else if (command.sensor_type == "relay3") {
                 if((state.toString() == relay3_state) )
                 {
@@ -309,7 +405,7 @@ socket.on('sensor-receive', function(d) {
                     return;
                 }
                 var acmd = "c" + value.toString();
-                arduino.write(acmd + ENDL);
+                MCU_write(acmd + ENDL);
             } else if (command.sensor_type == "relay4") {
                 if((state.toString() == relay4_state) )
                 {
@@ -318,7 +414,7 @@ socket.on('sensor-receive', function(d) {
                     return;
                 }
                 var acmd = "d" + value.toString();
-                arduino.write(acmd + ENDL);
+                MCU_write(acmd + ENDL);
             }
 
             last_server_command = command;
@@ -331,7 +427,7 @@ socket.on('sensor-receive', function(d) {
         datelog("   Bad DEVICE_ID (" + command.device_id + "), ignoring");
     }
 
-    mcu_ready = true; 
+    mcu_ready = true;
 });
 
 socket.on('disconnect', function() {
@@ -401,7 +497,7 @@ arduino.on('open', function() {
 
 arduino.on('data', function(data) {
 
-    var networkStatus = /*isNetworkAvailable() && */ socketConnected;
+    //datelog("[DATA] " + data);
 
     // First check if this is a request from ARDUINO
     if (data == STATUS_REQUEST) {
@@ -409,6 +505,11 @@ arduino.on('data', function(data) {
         sendOsReady();
         sendDeviceId();
         sendNetworkStatus();
+        return;
+
+    // Or an info message maybe ?
+    } else if (data.indexOf(INFO_MESSAGE + " ") === 0) {
+        datelog("INFO " + data.slice(2));
         return;
 
     } else if (networkStatus.socket) {
@@ -420,7 +521,7 @@ arduino.on('data', function(data) {
             datelog(data);
             return; // console.error(e);
         }
-
+        sendACK(data); // send an ACK to arduino
         sensorType = emit.t;
         sensorValue = Number(emit.v);
 

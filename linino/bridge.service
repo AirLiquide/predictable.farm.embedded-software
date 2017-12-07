@@ -5,14 +5,93 @@
 
 START=99
 
-EXTRA_COMMANDS="block unblock status"
+EXTRA_COMMANDS="block unblock status update flash"
 EXTRA_HELP="        status  Returns the status of the service
         block   Forces the loop to stop, and stop the service
         unblock Reenables the loop mode, and start the service"
 
+ID=5
+
+flash()
+{
+
+   	echo "updating arduino-IO-node.ino.hex"
+    touch /root/flash.lock
+    /usr/bin/merge-sketch-with-bootloader.lua /root/arduino-IO-node.ino.hex
+    /usr/bin/run-avrdude /root/arduino-IO-node.ino.hex
+    /usr/bin/reset-mcu
+    rm -f /root/flash.lock
+   	echo "updating arduino-IO-node.ino.hex done"
+}
+
+update()
+{
+    echo "Try to Update ..."
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.js | head -n 1)
+    if echo "$status" | grep -q 200 
+    then
+	    /usr/bin/curl -z /root/bridge.js http://update.predictablefarm.net/$ID/bridge.js -o /root/bridge-new.js
+	    if [ -e /root/bridge-new.js ]
+	    then
+    		echo "updating bridge.js"
+    		mv /root/bridge-new.js /root/bridge.js
+	    else
+    		echo "no update found for bridge.js"
+	    fi
+    fi
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.service | head -n 1)
+    if echo "$status" | grep -q 200 
+    then
+	    /usr/bin/curl -z /root/bridge.service http://update.predictablefarm.net/$ID/bridge.service -o /root/bridge-new.service
+	    if [ -e /root/bridge-new.service ]
+	    then
+   		    echo "updating bridge.service"
+   		    cp /root/bridge-new.service /root/bridge.service
+   		    mv /root/bridge-new.service /etc/init.d/bridge
+            chmod +x /etc/init.d/bridge
+   		    echo "rebooting in 20sec"
+            sleep 20
+            /sbin/reboot
+	    else
+   		    echo "no update found for bridge.service"
+	    fi
+    fi
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex| head -n 1)
+    if echo "$status" | grep -q 200 
+    then
+        if [ -e /root/arduino-IO-node.ino.hex ]
+        then
+   		    echo "verify version before downloading arduino-IO-node.ino.hex"
+            /usr/bin/curl -z /root/arduino-IO-node.ino.hex http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex -o /root/arduino-IO-node.ino-new.hex
+        else
+   		    echo "force downloading arduino-IO-node.ino.hex"
+	        /usr/bin/curl http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex -o /root/arduino-IO-node.ino-new.hex
+        fi
+        if [ -e /root/arduino-IO-node.ino-new.hex ]
+	    then
+   		    mv /root/arduino-IO-node.ino-new.hex /root/arduino-IO-node.ino.hex
+            flash
+	    else 
+            if [ -e /root/flash.lock ]
+            then
+    		    echo "try to continue reflash arduino-IO-node.ino.hex"
+                flash
+            else
+    		    echo "no update found for arduino-IO-node.ino.hex"
+    	    fi
+        fi
+    else
+        echo "server error : no update found for arduino-IO-node.ino.hex"
+    fi     
+}
+
 boot()
 {
-    export ID=4
+    export ID=$ID
+
+    update
 
     echo "Starting Bridge (loop) ..."
     rm /root/once.lock
