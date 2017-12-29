@@ -177,6 +177,7 @@ void Relay::updateState()
         // local button pressed force manual mode. automatic mode can only be reactivated from network side
         setMode(RELAY_MODE_MANUAL, i - 3);
         setState((!((myrelay >> i - 4) & 1)), i - 4);
+        delay(500);
         popup(i-3);
       }
       i++;

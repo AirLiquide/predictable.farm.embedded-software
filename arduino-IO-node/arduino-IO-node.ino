@@ -64,6 +64,7 @@ void setup()
 
   Serial.begin(9600);
   Wire.begin();
+  Wire.setClock(50000);
 
 #ifdef DEBUG
   while (!Serial) {
