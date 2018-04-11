@@ -1,12 +1,6 @@
 'use strict'
 
-const config = require('../config/default')
-const logger = require('../services/logger')
-
 const mraa = require('/usr/lib/node_modules/mraa') // require mraa
-
-logger.init('ads')
-logger.log('MRAA Version: %s ', mraa.getVersion())
 
 /* =========================================================================
     I2C ADDRESS/BITS

@@ -4,9 +4,9 @@ const config = require('../config/default')
 const logger = require('../services/logger')
 const scheduler = require('../services/scheduler-client')
 
-const adc = require('../lib/ADS1015.js')
-
 logger.init('par')
+
+const adc = require('../lib/ADS1015.js')
 
 function _send_data (value) {
   if (sendDataEnabled && scheduler.getDeviceId()) {
