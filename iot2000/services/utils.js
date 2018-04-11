@@ -1,5 +1,7 @@
 'use strict'
 
+const exec = require('child_process').exec
+
 const GREEN = 1
 const RED = 2
 const ORANGE = 3
@@ -11,7 +13,7 @@ let sleep = (delay) => {
 
 let led = (color) => {
   if (color == GREEN || color == RED || color == ORANGE) {
-    exec('/home/root/userled.py ' + color)
+    exec(__dirname + '/userled.py ' + color)
   }
 }
 
