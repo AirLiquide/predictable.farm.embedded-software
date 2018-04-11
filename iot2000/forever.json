@@ -1,10 +1,16 @@
 [
   {
-    "uid": "local",
+    "uid": "service",
     "append": true,
-    "logFile": "/var/log/local.log",
-    "script": "local.js",
-    "args": ["101", "myfood"]
+    "logFile": "/var/log/service.log",
+    "script": "service.js",
+    "args": ["101", "myfood-eu"]
+  },
+  {
+    "uid": "local-engine",
+    "append": true,
+    "logFile": "/var/log/local-engine.log",
+    "script": "local-engine.js"
   },
   {
     "uid": "shell",

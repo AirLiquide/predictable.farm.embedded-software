@@ -1,10 +1,10 @@
 [
   {
-    "uid": "local",
+    "uid": "service",
     "append": true,
-    "logFile": "/var/log/local.log",
-    "script": "local.js",
-    "args": ["101", "myfood"]
+    "logFile": "/var/log/service.log",
+    "script": "service.js",
+    "args": ["101", "myfood-eu"]
   },
   {
     "uid": "lcd",
@@ -13,9 +13,27 @@
     "script": "peripherals/lcd.js"
   },
   {
+    "uid": "co2",
+    "append": true,
+    "logFile": "/var/log/CO2_MHZ16_i2c.log",
+    "script": "peripherals/CO2_MHZ16_i2c.js"
+  },
+  {
     "uid": "relay",
     "append": true,
     "logFile": "/var/log/relay_native.log",
     "script": "peripherals/relay_native.js"
+  },
+  {
+    "uid": "par",
+    "append": true,
+    "logFile": "/var/log/PAR_ADS1015_i2c.log",
+    "script": "peripherals/PAR_ADS1015_i2c.js"
+  },
+  {
+    "uid": "rh",
+    "append": true,
+    "logFile": "/var/log/RelativeHumidity_SHT_i2c.log",
+    "script": "peripherals/RelativeHumidity_SHT_i2c.js"
   }
 ]

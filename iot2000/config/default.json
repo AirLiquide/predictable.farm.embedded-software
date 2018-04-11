@@ -1,6 +1,16 @@
 {
     "version": "2.0-siemens",
+    "interface": "eth0",
     "socket": {
         "port": 64000
+    },
+    "local": {
+        "server": {
+            "port": 7800
+        },
+        "engine": {
+            "port": 6500
+        },
+        "ignore_when_connected": true
     }
 }
