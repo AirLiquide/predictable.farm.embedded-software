@@ -31,7 +31,7 @@ console.log = function (obj, ...placeholders) {
   origlog.apply(this, placeholders)
 
   // Log to file too
-  log_file.write(prefix + util.format.apply(null, placeholders) + '\n')
+  log_file.write(util.format.apply(null, placeholders) + '\n')
 }
 
 let init = (module_name_var) => {
@@ -40,7 +40,7 @@ let init = (module_name_var) => {
   const logfilePath = path.join(__dirname, '..', LOG_DIR, module_name + '.log')
   log_file = fs.createWriteStream(logfilePath, {flags: 'a'})
 
-  console.log('Registering module')
+  // console.log('Registering module')
 }
 
 module.exports = {
