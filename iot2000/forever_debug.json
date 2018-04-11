@@ -1,0 +1,21 @@
+[
+  {
+    "uid": "local",
+    "append": true,
+    "logFile": "/var/log/local.log",
+    "script": "local.js",
+    "args": ["101", "myfood"]
+  },
+  {
+    "uid": "lcd",
+    "append": true,
+    "logFile": "/var/log/lcd.log",
+    "script": "peripherals/lcd.js"
+  },
+  {
+    "uid": "relay",
+    "append": true,
+    "logFile": "/var/log/relay_native.log",
+    "script": "peripherals/relay_native.js"
+  }
+]
