@@ -634,6 +634,7 @@ var i2c_scheduler = setInterval(function () {
       else if (dest == 'air_humidity') relative_humidity_sensor_enabled = false
       else if (dest == 'light_par') par_sensor_enabled = false
       else if (dest == 'lcd') lcd_enabled = false
+      else if (dest == 'relay') relay_enabled = false
     }
   }
   dest = null

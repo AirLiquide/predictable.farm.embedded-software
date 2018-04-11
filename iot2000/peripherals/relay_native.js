@@ -127,7 +127,7 @@ var local_service = scheduler.init({
         } else // auto mode
         {
           relay_state = rstate
-          if (relay_state == 1) // if auto mode set relay to on, set it back to off automatically after 5 sec
+          if (relay_state == 1) // if auto mode set relay to on, set it back to off automatically after 3 sec
           {
             if (!auto_off) {
               auto_off = setTimeout(function () {
