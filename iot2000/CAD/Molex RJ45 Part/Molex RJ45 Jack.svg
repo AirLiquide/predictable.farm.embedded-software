@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created with Fritzing (http://www.fritzing.org/) -->
+<svg xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' version='1.2' baseProfile='tiny' x='0in' y='0in' width='0.80485in' height='0.519811in' viewBox='-7.077 0 57.94 37.426' >
+
+  <g xmlns="http://www.w3.org/2000/svg" id="copper0">
+ <g xmlns="http://www.w3.org/2000/svg" id="copper1">
+  <circle id="connector7pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="8" cx="31.971" cy="15.587" r="2.041"/>
+      <circle id="connector6pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="7" cx="29.079" cy="20.633" r="2.041"/>
+      <circle id="connector5pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="6" cx="26.188" cy="15.587" r="2.041"/>
+      <circle id="connector3pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="4" cx="20.49" cy="15.587" r="2.041"/>
+      <circle id="connector1pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="2" cx="14.708" cy="15.587" r="2.041"/>
+      <circle id="connector4pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="5" cx="23.296" cy="20.633" r="2.041"/>
+      <circle id="connector2pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="3" cx="17.599" cy="20.633" r="2.041"/>
+      <circle id="connector0pad" fill="none" stroke="#F7BD13" stroke-width="1" connectorname="1" cx="11.816" cy="20.633" r="2.041"/>
+    <circle xmlns="http://www.w3.org/2000/svg" stroke="black" fill="black" id="nonconn0" cx="39.893" cy="27.833" r="4.606" stroke-width="0"/>
+    <circle xmlns="http://www.w3.org/2000/svg" stroke="black" fill="black" id="nonconn1" cx="3.893" cy="27.833" r="4.606" stroke-width="0"/>
+ </g>
+</g>
+<g xmlns="http://www.w3.org/2000/svg" id="silkscreen">
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#f0f0f0" y1="0.288" y2="0.288" class="other" x1="-2.712" stroke-linecap="round" x2="46.488" stroke-width="0.576"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#f0f0f0" y1="37.1384" y2="0.288" class="other" x1="-2.712" stroke-linecap="round" x2="-2.712" stroke-width="0.576"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#f0f0f0" y1="37.1384" y2="37.1384" class="other" x1="-2.712" stroke-linecap="round" x2="46.488" stroke-width="0.576"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#f0f0f0" y1="0.288" y2="37.1384" class="other" x1="46.488" stroke-linecap="round" x2="46.488" stroke-width="0.576"/>
+</g>
+</svg>
