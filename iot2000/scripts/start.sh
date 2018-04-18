@@ -6,15 +6,18 @@ cd $WORKDIR
 $WORKDIR/services/userled.py 3 #set led to orange
 
 # Pin IO4 => 24V
+echo "Exporting and setting PIN gpio6 (IO4) - 24V/VIN"
 echo 6 > /sys/class/gpio/export || "Pin 6 (IO4) already exported"
 echo "out" > /sys/class/gpio/gpio6/direction
 echo 1 > /sys/class/gpio/gpio6/value
 
 # Pin IO5 = BUS I2C
+echo "Exporting and setting PIN gpio0 (IO5) - Bus I2C"
 echo 0 > /sys/class/gpio/export || "Pin 0 (IO5) already exported"
 echo "out" > /sys/class/gpio/gpio0/direction
 echo 1 > /sys/class/gpio/gpio0/value
 
+echo "Starting forever"
 forever start $WORKDIR/forever.json
 
 # forever start -a -l /var/log/service.log -p /var/log/ $WORKDIR/service.js 100 myfood  &

@@ -27,13 +27,18 @@ const defaults = {
   onSchedule: () => {}
 }
 
+const options = {
+  path: '/socket.io/socket.io.js', // Limit ECONNRESET errors
+  transports: [ 'websocket' ] // Limit to websocket (and not xhr for instance)
+}
+
 let init = (options) => {
   options = Object.assign({}, defaults, options)
 
   module_name = options.module_name
   logger.init('scheduler-' + module_name)
 
-  local_service = client('http://127.0.0.1:' + config.socket.port)
+  local_service = client('http://127.0.0.1:' + config.socket.port, options)
 
   local_service.on('connect', () => {
     logger.log('%s is connected', module_name)
