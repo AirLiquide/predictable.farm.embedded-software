@@ -100,7 +100,7 @@ if (graph) {
       logger.log(' * This bridge is a LOCAL SERVER (mixed)')
       // We are an actuator, create a server
       logger.log(' * Creating local server on ' + config.local.server.port)
-      local_server = server(config.local.server.port)
+      var local_server = server(config.local.server.port)
       local_server.on('connect', function (local_socket) {
         logger.log(' * Local engine is connected')
         // The lib will create a client connection to the local_server, namely
@@ -126,7 +126,6 @@ if (graph) {
       logger.log(' * --> ' + address + ':' + config.local.server.port)
       local_sockets.push(client(address + ':' + config.local.server.port))
     })
-    sendNetworkStatus()
   })
 
   // This will be sent by the engine, locally on the same node
