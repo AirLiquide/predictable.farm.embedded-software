@@ -36,6 +36,7 @@ const MODE_LOCAL = 0
 const MODE_REMOTE = 1
 
 // Local config parameters
+var local_server = null
 var local_sockets = [] // Local sockets for client
 
 // Do we have a local graph ?
@@ -100,7 +101,10 @@ if (graph) {
       logger.log(' * This bridge is a LOCAL SERVER (mixed)')
       // We are an actuator, create a server
       logger.log(' * Creating local server on ' + config.local.server.port)
-      var local_server = server(config.local.server.port)
+      if (local_server) {
+        local_server.close()
+      }
+      local_server = server(config.local.server.port)
       local_server.on('connect', function (local_socket) {
         logger.log(' * Local engine is connected')
         // The lib will create a client connection to the local_server, namely
@@ -121,11 +125,20 @@ if (graph) {
     // so we can send data to the devices that have the relays (possibly, ourself)
     logger.log('** Opening local sockets :')
 
+    // Disconnect clients before
+    local_sockets.forEach(function (socket) {
+      socket.close()
+    })
+
+    // And recreate clients for each relay (actuator)
     data.relays.forEach(function (server) {
       var address = 'http://' + ((server.deviceid == DEVICE_ID) ? 'localhost' : ('predictable' + server.deviceid + '.local'))
       logger.log(' * --> ' + address + ':' + config.local.server.port)
       local_sockets.push(client(address + ':' + config.local.server.port))
     })
+  })
+  engine_socket.on('config-error', function (error) {
+    logger.log(' * Error when setting the config: ' + error)
   })
 
   // This will be sent by the engine, locally on the same node
