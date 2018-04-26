@@ -369,7 +369,7 @@ remote_socket.on('local-graph', function (data) {
 
     if (engine_socket) {
       logger.log('** Re-emitting set-config to local engine')
-      engine_socket.emit('set-config')
+      engine_socket.emit('set-config', {device_id: DEVICE_ID, graph: graph})
     } else {
       logger.log('** Relaunching process to create the engine socket')
       exitProcess()
