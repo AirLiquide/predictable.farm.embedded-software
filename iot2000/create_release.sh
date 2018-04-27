@@ -1,7 +1,7 @@
 CONTAINER_VER="2.0-siemens"
 PRODUCT_NAME="predictable-farm"
 OS=$(uname -s)
-if [[ $platform == 'Linux' ]]; then
+if [[ $OS == 'Linux' ]]; then
       FORMAT="crc"
 else
       FORMAT="newc"
