@@ -3,7 +3,6 @@
 var DEVICE_ID = 0
 
 var SERVER_URL = 'http://lafactory.predictable.zone'
-const UPDATE_ENDPOINT = 'http://update.predictablefarm.net/'
 const GRAPH_FILE = __dirname + '/graphs/graph.json'
 
 const config = require('./config/default')
@@ -51,10 +50,6 @@ var networkStatus = {
   remote_socket: false,
   network: false
 }
-
-var receivedData = false
-var mcu_ready = false
-var updateLock = false
 
 var dataTimer = null // timer in between two sets of data sent to the server
 var rebootTimer = null // timer before rebooting after a network down event
@@ -256,45 +251,6 @@ function reboot () {
   })
 }
 
-function launchUpdate () {
-  logger.log('Launch update')
-  // Update bridge file
-  logger.log('Replacing bridge')
-  exec('mkdir -p /root/backup', function () {
-    exec('mv /root/bridge.js /root/backup/bridge.backup.' + (Date.now()) + '.js', function () {
-      exec('mv /root/update/bridge.js /root/bridge.js', function () {
-        // Update INO file
-        logger.log('Merging sketch with bootloader')
-        exec('merge-sketch-with-bootloader.lua /root/update/update.ino.hex', function () {
-          logger.log('Flashing sketch')
-          exec('run-avrdude /root/update/update.ino.hex', function () {
-            reset_mcu()
-            setTimeout(function () {
-              // We give 30 secs before it can be updated again, just to avoid race conditions if
-              // socket messages are received twice.
-              updateLock = false
-            }, 30 * 1000)
-            reboot()
-          })
-        })
-      })
-    })
-  })
-}
-
-function retrieveUpdateFiles () {
-  logger.log('Retrieve update files')
-  exec('rm -fr /root/update && mkdir -p /root/update', function () {
-    exec('cd /root/update && wget ' + UPDATE_ENDPOINT + '/' + DEVICE_ID + '/' + 'update.ino.hex', function () {
-      exec('cd /root/update && wget ' + UPDATE_ENDPOINT + '/' + DEVICE_ID + '/' + 'bridge.js', function () {
-        exec('cd /root/update && wget ' + UPDATE_ENDPOINT + '/' + DEVICE_ID + '/' + 'bridge.service', function () {
-          launchUpdate()
-        })
-      })
-    })
-  })
-}
-
 function isRelay (command) {
   try {
     var cmd = JSON.parse(command)
@@ -385,24 +341,6 @@ remote_socket.on('connect', function () {
 
   networkStatus.network = true
   networkStatus.remote_socket = true
-})
-
-remote_socket.on('update', function (newVersion) {
-  // If the new version is not really new
-  if (parseInt(newVersion) <= VERSION) {
-    logger.log('Aborted update because v' + newVersion + ' is not new enough')
-    return
-  }
-
-  if (updateLock) {
-    logger.log('Aborted update because an update is already in progress')
-    return
-  }
-
-  updateLock = true
-
-  // Retrieve new files : bridge.js, bridge.service and .hex file
-  retrieveUpdateFiles()
 })
 
 remote_socket.on('sensor-receive', function (data) {
