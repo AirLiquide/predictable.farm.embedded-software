@@ -1,6 +1,8 @@
 #!/bin/sh
 WORKDIR=/home/root/predictable-farm
 
+echo ""
+echo "----------"
 echo "POSTINSTALL : chmod +x"
 chmod +x $WORKDIR/*
 
