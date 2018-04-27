@@ -16,7 +16,9 @@ Predictable Farm — iot2000 flavour
 
 ### To create a new release
 
-    ./release.sh
+We use SWupdate (https://github.com/sbabic/swupdate) with its Yocto layer : https://github.com/sbabic/meta-swupdate/tree/morty.
+
+    ./create_release.sh
 
 This will create a `predictable-farm_<version>.swu` file in the root folder, that can be used with swupdate on the target device :
 

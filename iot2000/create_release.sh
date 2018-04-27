@@ -1,6 +1,15 @@
 CONTAINER_VER="2.0-siemens"
 PRODUCT_NAME="predictable-farm"
-FORMAT="newc"
+OS=$(uname -s)
+if [[ $platform == 'Linux' ]]; then
+      FORMAT="crc"
+else
+      FORMAT="newc"
+fi
+
+echo "Using format : $FORMAT"
+echo ""
+
 FILES="sw-description \
        release_install.sh \
        release_restart.sh \
