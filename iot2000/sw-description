@@ -1,0 +1,97 @@
+software =
+{
+        version = "2.0-siemens";
+
+        hardware-compatibility: ["rev1"];
+
+        files: (
+                {
+                        filename = "config/default.json";
+                        path = "/home/root/predictable-farm/config/default.json";
+                },
+                {
+                        filename = "lib/ADS1015.js";
+                        path = "/home/root/predictable-farm/lib/ADS1015.js";
+                },
+                {
+                        filename = "peripherals/lcd.js";
+                        path = "/home/root/predictable-farm/peripherals/lcd.js";
+                },
+                {
+                        filename = "peripherals/Barometer_MPL115A2_i2c.js";
+                        path = "/home/root/predictable-farm/peripherals/Barometer_MPL115A2_i2c.js";
+                },
+                {
+                        filename = "peripherals/CO2_MHZ16_i2c.js";
+                        path = "/home/root/predictable-farm/peripherals/CO2_MHZ16_i2c.js";
+                },
+                {
+                        filename = "peripherals/CO2_MHZ16_uart.js";
+                        path = "/home/root/predictable-farm/peripherals/CO2_MHZ16_uart.js";
+                },
+                {
+                        filename = "peripherals/relay_native.js";
+                        path = "/home/root/predictable-farm/peripherals/relay_native.js";
+                },
+                {
+                        filename = "peripherals/RelativeHumidity_SHT_i2c.js";
+                        path = "/home/root/predictable-farm/peripherals/RelativeHumidity_SHT_i2c.js";
+                },
+                {
+                        filename = "peripherals/PAR_ADS1015_i2c.js";
+                        path = "/home/root/predictable-farm/peripherals/PAR_ADS1015_i2c.js";
+                },
+                {
+                        filename = "services/logger.js";
+                        path = "/home/root/predictable-farm/services/logger.js";
+                },
+                {
+                        filename = "services/utils.js";
+                        path = "/home/root/predictable-farm/services/utils.js";
+                },
+                {
+                        filename = "services/userled.py";
+                        path = "/home/root/predictable-farm/services/userled.py";
+                },
+                {
+                        filename = "services/scheduler-client.js";
+                        path = "/home/root/predictable-farm/services/scheduler-client.js";
+                },
+                {
+                        filename = "scripts/start.sh";
+                        path = "/home/root/predictable-farm/scripts/start.sh";
+                },
+                {
+                        filename = "scripts/wd_check_i2c.sh";
+                        path = "/home/root/predictable-farm/scripts/wd_check_i2c.sh";
+                },
+                {
+                        filename = "forever.json";
+                        path = "/home/root/predictable-farm/forever.json";
+                },
+                {
+                        filename = "service.js";
+                        path = "/home/root/predictable-farm/service.js";
+                },
+                {
+                        filename = "shell.js";
+                        path = "/home/root/predictable-farm/shell.js";
+                },
+                {
+                        filename = "local-engine.js";
+                        path = "/home/root/predictable-farm/local-engine.js";
+                }
+        );
+
+        scripts: (
+                {
+                        filename = "release_install.sh";
+                        type = "preinstall";
+                },
+                {
+                        filename = "release_restart.sh";
+                        type = "postinstall";
+                }
+        );
+
+}
