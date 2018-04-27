@@ -22,6 +22,6 @@ We use SWupdate (https://github.com/sbabic/swupdate) with its Yocto layer : http
 
 This will create a `predictable-farm_<version>.swu` file in the root folder, that can be used with swupdate on the target device :
 
-    swupdate_unstripped -i predictable-farm_<version>.swu --hwrevision iot2040:rev1
+    swupdate_unstripped --hwrevision iot2040:rev1 -i predictable-farm_<version>.swu
 
 > release_install.sh and release_restart.sh are pre and post install scripts used by swupdate during the update process.
