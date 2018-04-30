@@ -119,7 +119,7 @@ var local_service = scheduler.init({
       var rstate = getRelayState(data)
       if (rstate != relay_state) _send_data() // change broadcast
       var mode = getRelayMode(data)
-      if (mode < 0) // command is comming from automation engine
+      if (mode < 0 || mode ==  0) // command is comming from automation engine
       {
         if (relay_mode == RELAY_MODE_MANUAL) {
           logger.log('relay : automation engine command discarded as relay is in manual mode')
