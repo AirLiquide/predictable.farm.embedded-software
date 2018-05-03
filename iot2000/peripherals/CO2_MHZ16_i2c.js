@@ -263,19 +263,16 @@ function CO2_measure () {
     timeoutTO++
     if (av = SC16IS750_available()) {
       buf[i] = SC16IS750_read()
-      // logger.log(i+" = "+buf[i]+" = ");
       if (i == 0 && buf[i] != 255) {
-        // logger.log("/");
         continue
       } else {
         i++
-        // logger.log(".");
       }
     }
     if (timeoutTO == 1000) {
       scheduler.hasRun()
-      logger.log('timeout')
-      _co2_supply_off() // for security reason
+      logger.log('CO2_timeout')
+      _co2_supply_off() // for safety reason
       return
     }
   }
