@@ -241,7 +241,7 @@ SC16IS750_SetLine()
 function CO2_measure () {
   // logger.log("CO2_measure");
 
-  // ask co2 sensor to prepare a measurment
+  // ask co2 sensor to prepare a measurement
   SC16IS750_write(0xFF)
   SC16IS750_write(0x01)
   SC16IS750_write(0x86)
@@ -286,7 +286,7 @@ function CO2_measure () {
     scheduler.hasRun()
     _send_data(ppm)
     logger.log('CO2_measure --> ' + ppm)
-    if (ppm > 3990) _co2_supply_off() // for security reason
+    if (ppm > 3990) _co2_supply_off() // for safety reason
 
     // temperature = buf[4] - 40;
     return
@@ -314,7 +314,7 @@ function _send_data (value) {
       sensor_value: sensorValue.toString()
     })
 
-    logger.log(msg2send)
+    // logger.log(msg2send)
     scheduler.sendData(msg2send)
   }
 }

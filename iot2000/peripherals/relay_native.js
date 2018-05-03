@@ -38,7 +38,7 @@ function _send_data () {
       sensor_mode: relay_mode.toString()
     })
 
-    logger.log('send :' + msg2send)
+    // logger.log('send :' + msg2send)
     scheduler.sendData(msg2send)
   }
 }
