@@ -321,7 +321,8 @@ function _co2_supply_off () {
     var msg2send = JSON.stringify({
       device_id: scheduler.getDeviceId().toString(),
       sensor_type: 'relay1',
-      sensor_value: '0'
+      sensor_value: '0',
+      sensor_mode: '0' // automatic
     })
 
     logger.log(msg2send)
