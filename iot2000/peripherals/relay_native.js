@@ -16,6 +16,8 @@ const RELAY_MODE_MANUAL = '1'
 const MODE_LOCAL = 0
 const MODE_REMOTE = 1
 
+
+var current_relay_state = '0'
 var relay_state = '0'
 var relay_mode = '0'
 var relay = new mraa.Gpio(8)// setup digital read on pin 8
@@ -58,11 +60,38 @@ function isExtBtnButtonPressed () {
 function toggleRelay () {
   // logger.log("relay : set to " + relay_state+ " mode = " + relay_mode);
   relay.write(Number(relay_state))
+  if((current_relay_state != relay_state))
+  {
+    current_relay_state = relay_state
+    _send_data() // send data msg on change
+  }
 }
 
 var loop = 0
 var btnState = 0
 var auto_off = null
+
+function auto_off_start()
+{
+  logger.log('auto off start')
+  if (!auto_off) {
+    logger.log('auto off started')
+    auto_off = setTimeout(function () {
+      relay_state = 0
+      logger.log('auto off stopped after completion')
+      auto_off = null
+      _send_data() // auto off change broadcast
+    }, 3000)
+  }
+}
+function auto_off_stop()
+{
+  logger.log('auto off stop')
+  if (auto_off) {
+    clearTimeout(auto_off)
+    logger.log('auto off canceled')
+  }
+}
 
 function isRelay (relayNumber, command) {
   try {
@@ -129,27 +158,21 @@ var local_service = scheduler.init({
           relay_state = rstate
           if (relay_state == 1) // if auto mode set relay to on, set it back to off automatically after 3 sec
           {
-            if (!auto_off) {
-              auto_off = setTimeout(function () {
-                relay_state = 0
-                logger.log('auto off')
-                auto_off = null
-                _send_data() // auto off change broadcast
-              }, 3000)
-            }
+            auto_off_start()
           }
         }
       } else // manual command from dashboard
       {
         relay_state = rstate
       }
-      relay_mode = mode
+      if(relay_mode != mode)
+      {
+        relay_mode = mode
+        _send_data()
+      }
 
       if (relay_mode == RELAY_MODE_MANUAL) {
-        if (auto_off) {
-          clearTimeout(auto_off)
-          logger.log('auto off canceled')
-        }
+        auto_off_stop()
       }
     }
   },
@@ -169,6 +192,7 @@ var local_service = scheduler.init({
           logger.log('btn click')
           btnState = 0
           relay_mode = RELAY_MODE_MANUAL // force manual mode
+          auto_off_stop();
           if (relay_state == '0') relay_state = '1'
           else relay_state = '0'
         }
