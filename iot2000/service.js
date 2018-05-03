@@ -459,8 +459,8 @@ my_io.on('connection', function (my_io_socket) {
 
     // If we have a composite payload with a message too :
     if (payload.data) {
-      var data = payload.data
-      var message = payload.message
+      data = payload.data
+      message = payload.message
     }
 
     // logger.log('[DATA] ' + data)
