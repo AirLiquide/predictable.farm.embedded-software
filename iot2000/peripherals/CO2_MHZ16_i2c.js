@@ -325,8 +325,8 @@ function _co2_supply_off () {
       sensor_mode: '0' // automatic
     })
 
-    logger.log(msg2send)
-    scheduler.sendData(msg2send)
+    // logger.log(msg2send)
+    scheduler.sendData(msg2send, 'CO2 automatic supply cutoff')
   }
 }
 

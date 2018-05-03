@@ -100,9 +100,9 @@ let hasRun = () => {
   }
 }
 
-let sendData = (data) => {
+let sendData = (data, message) => {
   if (isInited) {
-    local_service.emit('data', data)
+    local_service.emit('data', {data: data, message: message})
   }
 }
 

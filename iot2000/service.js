@@ -453,14 +453,22 @@ my_io.on('connection', function (my_io_socket) {
     }
   })
 
-  my_io_socket.on('data', function (data) {
-    // logger.log("[DATA] " + data);
-    logger.log(' --> Sending to server: ' + data)
+  my_io_socket.on('data', function (payload) {
+    var data = payload
+    var message = null
+
+    // If we have a composite payload with a message too :
+    if (payload.data) {
+      var data = payload.data
+      var message = payload.message
+    }
+
+    // logger.log('[DATA] ' + data)
 
     utils.led(utils.colors.GREEN)
 
     if (networkStatus.remote_socket) {
-      // logger.log(" --> Sending to remote server: " + data);
+      logger.log(' --> Sending to remote: ' + data + (message ? ' (' + message + ')' : ''))
       remote_socket.emit('sensor-emit', data)
     }
 
