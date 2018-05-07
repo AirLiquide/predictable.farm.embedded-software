@@ -3,10 +3,7 @@ WORKDIR=/home/root/predictable-farm
 
 echo ""
 echo "----------"
-echo "POSTINSTALL : chmod +x"
-chmod +x $WORKDIR/*.sh
-chmod +x $WORKDIR/scripts/*.sh
-
-echo "POSTINSTALL : Restarting forever"
-/usr/lib/node_modules/forever/bin/forever stopall
-cd $WORKDIR && /usr/lib/node_modules/forever/bin/forever start forever.json
+echo "POSTINSTALL : chmod +rx scripts"
+chmod -R +rx $WORKDIR/*.js
+chmod -R +rx $WORKDIR/scripts/*.sh
+chmod +rx $WORKDIR/services/*.py

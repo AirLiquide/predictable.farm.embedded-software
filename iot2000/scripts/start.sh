@@ -3,7 +3,8 @@ WORKDIR=/home/root/predictable-farm
 
 cd $WORKDIR
 
-$WORKDIR/services/userled.py 3 #set led to orange
+echo "Setting orange LED"
+./services/userled.py 3 #set led to orange
 
 # Pin IO4 => 24V
 echo "Exporting and setting PIN gpio6 (IO4) - 24V/VIN"
@@ -17,8 +18,8 @@ echo 0 > /sys/class/gpio/export || "Pin 0 (IO5) already exported"
 echo "out" > /sys/class/gpio/gpio0/direction
 echo 1 > /sys/class/gpio/gpio0/value
 
-echo "Starting forever"
-forever start $WORKDIR/forever.json
+echo "Starting forever with configuration file"
+forever start forever.json
 
 # forever start -a -l /var/log/service.log -p /var/log/ $WORKDIR/service.js 100 myfood  &
 # sleep 2;
