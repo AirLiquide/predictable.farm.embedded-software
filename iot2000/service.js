@@ -11,15 +11,25 @@ const utils = require('./services/utils')
 
 logger.init('service')
 
-process.argv.forEach(function (val, index, array) {
-  if (index >= 2) {
-    if (index == 2) {
-      DEVICE_ID = val
-    } else if (index == 3) {
-      SERVER_URL = 'http://' + val + '.predictable.zone'
+if (process.env.DEVICE_ID) {
+  DEVICE_ID = process.env.DEVICE_ID
+}
+if (process.env.DEVICE_ZONE) {
+  SERVER_URL = 'http://' + process.env.DEVICE_ZONE + '.predictable.zone'
+}
+
+// Command-line arguments take precedence, if there are any
+if (process.argv.length > 0) {
+  process.argv.forEach(function (val, index, array) {
+    if (index >= 2) {
+      if (index == 2) {
+        DEVICE_ID = val
+      } else if (index == 3) {
+        SERVER_URL = 'http://' + val + '.predictable.zone'
+      }
     }
-  }
-})
+  })
+}
 
 /* ---------------------------------------------------------------------- */
 
