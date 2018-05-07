@@ -19,7 +19,8 @@ echo "out" > /sys/class/gpio/gpio0/direction
 echo 1 > /sys/class/gpio/gpio0/value
 
 echo "Starting forever with configuration file"
-forever -p /home/root/.forever start forever.json
+# Why setting home here ? See https://github.com/foreverjs/forever/issues/415
+HOME=/home/root/ forever -p /home/root/.forever start forever.json
 
 # forever start -a -l /var/log/service.log -p /var/log/ $WORKDIR/service.js 100 myfood  &
 # sleep 2;
