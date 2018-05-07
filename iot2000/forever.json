@@ -12,11 +12,6 @@
     "script": "local-engine.js"
   },
   {
-    "uid": "shell",
-    "append": true,
-    "script": "shell.js"
-  },
-  {
     "uid": "lcd",
     "append": true,
     "script": "peripherals/lcd.js"

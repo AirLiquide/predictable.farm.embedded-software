@@ -74,10 +74,6 @@ software =
                         path = "/home/root/predictable-farm/service.js";
                 },
                 {
-                        filename = "shell.js";
-                        path = "/home/root/predictable-farm/shell.js";
-                },
-                {
                         filename = "local-engine.js";
                         path = "/home/root/predictable-farm/local-engine.js";
                 }
