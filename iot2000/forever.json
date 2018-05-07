@@ -2,8 +2,7 @@
   {
     "uid": "service",
     "append": true,
-    "script": "service.js",
-    "args": ["101", "myfood-eu"]
+    "script": "service.js"
   },
   {
     "uid": "local-engine",
