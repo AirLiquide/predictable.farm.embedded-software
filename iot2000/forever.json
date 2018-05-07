@@ -7,7 +7,6 @@
   {
     "uid": "local-engine",
     "append": true,
-    "logFile": "/var/log/local-engine.log",
     "script": "local-engine.js"
   },
   {
