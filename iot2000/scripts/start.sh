@@ -19,7 +19,7 @@ echo "out" > /sys/class/gpio/gpio0/direction
 echo 1 > /sys/class/gpio/gpio0/value
 
 echo "Starting forever with configuration file"
-forever start forever.json
+forever -p /home/root/.forever start forever.json
 
 # forever start -a -l /var/log/service.log -p /var/log/ $WORKDIR/service.js 100 myfood  &
 # sleep 2;
