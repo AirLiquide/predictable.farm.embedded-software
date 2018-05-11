@@ -2,19 +2,12 @@
   {
     "uid": "service",
     "append": true,
-    "script": "service.js",
-    "args": ["101", "myfood-eu"]
+    "script": "service.js"
   },
   {
     "uid": "local-engine",
     "append": true,
-    "logFile": "/var/log/local-engine.log",
     "script": "local-engine.js"
-  },
-  {
-    "uid": "shell",
-    "append": true,
-    "script": "shell.js"
   },
   {
     "uid": "lcd",

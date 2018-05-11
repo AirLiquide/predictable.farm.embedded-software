@@ -241,7 +241,7 @@ SC16IS750_SetLine()
 function CO2_measure () {
   // logger.log("CO2_measure");
 
-  // ask co2 sensor to prepare a measurment
+  // ask co2 sensor to prepare a measurement
   SC16IS750_write(0xFF)
   SC16IS750_write(0x01)
   SC16IS750_write(0x86)
@@ -263,19 +263,16 @@ function CO2_measure () {
     timeoutTO++
     if (av = SC16IS750_available()) {
       buf[i] = SC16IS750_read()
-      // logger.log(i+" = "+buf[i]+" = ");
       if (i == 0 && buf[i] != 255) {
-        // logger.log("/");
         continue
       } else {
         i++
-        // logger.log(".");
       }
     }
     if (timeoutTO == 1000) {
       scheduler.hasRun()
-      logger.log('timeout')
-      _co2_supply_off() // for security reason
+      logger.log('CO2_timeout')
+      _co2_supply_off() // for safety reason
       return
     }
   }
@@ -286,7 +283,7 @@ function CO2_measure () {
     scheduler.hasRun()
     _send_data(ppm)
     logger.log('CO2_measure --> ' + ppm)
-    if (ppm > 3990) _co2_supply_off() // for security reason
+    if (ppm > 3990) _co2_supply_off() // for safety reason
 
     // temperature = buf[4] - 40;
     return
@@ -314,7 +311,7 @@ function _send_data (value) {
       sensor_value: sensorValue.toString()
     })
 
-    logger.log(msg2send)
+    // logger.log(msg2send)
     scheduler.sendData(msg2send)
   }
 }
@@ -324,11 +321,12 @@ function _co2_supply_off () {
     var msg2send = JSON.stringify({
       device_id: scheduler.getDeviceId().toString(),
       sensor_type: 'relay1',
-      sensor_value: '0'
+      sensor_value: '0',
+      sensor_mode: '0' // automatic
     })
 
-    logger.log(msg2send)
-    scheduler.sendData(msg2send)
+    // logger.log(msg2send)
+    scheduler.sendData(msg2send, 'CO2 automatic supply cutoff')
   }
 }
 

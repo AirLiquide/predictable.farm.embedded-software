@@ -114,7 +114,7 @@ function _send_data (value) {
       sensor_value: sensorValue.toString()
     })
 
-    logger.log(msg2send)
+    // logger.log(msg2send)
     scheduler.sendData(msg2send)
   }
 }
@@ -127,8 +127,8 @@ function _co2_supply_off () {
       sensor_value: '0'
     })
 
-    logger.log(msg2send)
-    scheduler.sendData(msg2send)
+    // logger.log(msg2send)
+    scheduler.sendData(msg2send, 'CO2 automatic supply cutoff')
   }
 }
 

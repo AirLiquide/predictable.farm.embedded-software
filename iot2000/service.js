@@ -1,9 +1,10 @@
 'use strict'
 
 var DEVICE_ID = 0
-
 var SERVER_URL = 'http://lafactory.predictable.zone'
+
 const GRAPH_FILE = __dirname + '/graphs/graph.json'
+const HEARTBEAT_ENDPOINT = 'http://update.predictablefarm.net/heartbeat'
 
 const config = require('./config/default')
 const logger = require('./services/logger')
@@ -11,15 +12,25 @@ const utils = require('./services/utils')
 
 logger.init('service')
 
-process.argv.forEach(function (val, index, array) {
-  if (index >= 2) {
-    if (index == 2) {
-      DEVICE_ID = val
-    } else if (index == 3) {
-      SERVER_URL = 'http://' + val + '.predictable.zone'
+if (process.env.DEVICE_ID) {
+  DEVICE_ID = process.env.DEVICE_ID
+}
+if (process.env.DEVICE_ZONE) {
+  SERVER_URL = 'http://' + process.env.DEVICE_ZONE + '.predictable.zone'
+}
+
+// Command-line arguments take precedence, if there are any
+if (process.argv.length > 0) {
+  process.argv.forEach(function (val, index, array) {
+    if (index >= 2) {
+      if (index == 2) {
+        DEVICE_ID = val
+      } else if (index == 3) {
+        SERVER_URL = 'http://' + val + '.predictable.zone'
+      }
     }
-  }
-})
+  })
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -164,9 +175,7 @@ var remote_socket = client(
 
 logger.log(' 4. Starting network check')
 var networkCheck = setInterval(function () {
-  // var test_file = 'http://update.predictablefarm.net/' + DEVICE_ID + '/bridge.js'
-  var test_file = 'http://update.predictablefarm.net/7/bridge.js' // debug
-  var test_network_cmdline = '(/usr/bin/curl --head --silent ' + test_file + ' | head -n 1) | grep -q 200 && echo 1 || echo 0'
+  var test_network_cmdline = '(/usr/bin/curl --head --silent ' + HEARTBEAT_ENDPOINT + ' | head -n 1) | grep -q 200 && echo 1 || echo 0'
   exec(test_network_cmdline, function (error, stdout, stderr) {
     var pingSuccess = (parseInt(stdout) == 1)
     networkStatus = {
@@ -176,7 +185,7 @@ var networkCheck = setInterval(function () {
 
     if (!pingSuccess) {
       utils.led(utils.colors.RED)
-      /* logger.log("Cannot get " + test_file + ", scheduling a reboot in 10 minutes ...");
+      /* logger.log("Cannot get " + HEARTBEAT_ENDPOINT + ", scheduling a reboot in 10 minutes ...");
             rebootTimer = setTimeout(function () {
                 all_relay_off();
                 reboot();
@@ -453,14 +462,22 @@ my_io.on('connection', function (my_io_socket) {
     }
   })
 
-  my_io_socket.on('data', function (data) {
-    // logger.log("[DATA] " + data);
-    logger.log(' --> Sending to server: ' + data)
+  my_io_socket.on('data', function (payload) {
+    var data = payload
+    var message = null
+
+    // If we have a composite payload with a message too :
+    if (payload.data) {
+      data = payload.data
+      message = payload.message
+    }
+
+    // logger.log('[DATA] ' + data)
 
     utils.led(utils.colors.GREEN)
 
     if (networkStatus.remote_socket) {
-      // logger.log(" --> Sending to remote server: " + data);
+      logger.log(' --> Sending to remote: ' + data + (message ? ' (' + message + ')' : ''))
       remote_socket.emit('sensor-emit', data)
     }
 

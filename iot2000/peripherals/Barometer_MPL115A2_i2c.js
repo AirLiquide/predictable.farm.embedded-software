@@ -131,7 +131,7 @@ function _send_data (type, value) {
       sensor_value: sensorValue.toString()
     })
 
-    logger.log(msg2send)
+    // logger.log(msg2send)
     scheduler.sendData(msg2send)
   }
 }

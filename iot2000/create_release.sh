@@ -22,7 +22,6 @@ FILES="sw-description \
        scripts/* \
        services/* \
        service.js \
-       shell.js \
        local-engine.js \
        forever.json \
       "
