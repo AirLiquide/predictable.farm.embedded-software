@@ -21,6 +21,25 @@ Enable it for auto starting at boot :
 
     /etc/init.d/bridge enable
 
+#### Swap
+
+It's better to have some swap to manage RAM overflows :
+
+    cd /
+    mkdir swap
+    dd if=/dev/zero of=/swap/yunswapfile bs=1M count=512
+    # wait a bit here, takes ~10min
+    mkswap /swap/yunswapfile
+    swapon /swap/yunswapfile
+    uci add fstab swap
+    uci set fstab.@swap[0].device=/swap/yunswapfile
+    uci set fstab.@swap[0].enabled=1
+    uci set fstab.@swap[0].fstype=swap
+    uci set fstab.@swap[0].options=default
+    uci set fstab.@swap[0].enabled_fsck=0
+    uci commit # might trigger some errors, but that's ok
+    reboot
+
 #### Crontab
 
 Make the reboot script executable if necessary :

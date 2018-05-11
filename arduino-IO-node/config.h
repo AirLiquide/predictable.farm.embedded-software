@@ -19,6 +19,16 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+//#define DEBUG
+
+//#define I2CLIB
+
+//#define NOLCD
+//#define USE_MENU
+#ifndef USE_MENU 
+#define USE_DASHBOARD_VIEW
+#endif
+//#define USE_ACK
 /* As the Arduino MCU is limited in size / memory , this is the location where the project can be tweaked to add/remove capabilities */
 //#define SENSOR_TYPE_CO2_SENSOR
 //#define SENSOR_TYPE_CO_SENSOR
@@ -32,14 +42,16 @@
 //#define AMBIANT_TH02_SENSOR  // pose probleme quand utilisé avec d'autres capteurs I2C
 //#define SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
 
+#define ACTUATOR_TYPE_RELAY
+
 //#define SENSOR_TYPE_WATER_LEVEL_SENSOR
 
 
-#define SENSOR_TYPE_EZO_SENSOR
-#define SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
-#define SENSOR_TYPE_WATER_PH_SENSOR
-#define SENSOR_TYPE_WATER_EC_SENSOR
-#define SENSOR_TYPE_WATER_DO_SENSOR
+//#define SENSOR_TYPE_EZO_SENSOR
+//#define SENSOR_TYPE_WATER_TEMPERATURE_SENSOR
+//#define SENSOR_TYPE_WATER_PH_SENSOR
+//#define SENSOR_TYPE_WATER_EC_SENSOR
+//#define SENSOR_TYPE_WATER_DO_SENSOR
 //#define SENSOR_TYPE_WATER_ORP_SENSOR
 
 

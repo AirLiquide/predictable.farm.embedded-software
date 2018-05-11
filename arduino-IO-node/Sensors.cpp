@@ -169,9 +169,14 @@ void  Sensors::detect()
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
     // a device did acknowledge to the address.
+#ifndef I2CLIB
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
-
+#else
+  I2c.start();
+  error = I2c.sendAddress(SLA_W(address));
+  I2c.stop();
+#endif
     if (error == 0)
     {
 #ifdef DEBUG
@@ -222,9 +227,10 @@ void  Sensors::detect()
 
           p_myLCD->DispStringAt(AIR_HUMIDITY_LEVEL_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
           printOk();
+#ifdef SENSOR_TYPE_AIR_TEMPERATURE_SENSOR
           p_myLCD->DispStringAt(AIR_TEMPERATURE_MEASUREMENT_DNAME, 0, lcdLine * ROW_OFFSET);
           printOk();
-
+#endif
           sensor_air_relative_humidity = 1 ;
           break;
 #endif
@@ -460,11 +466,11 @@ void Sensors::printinfo (char* sensorName, float sensorValue, uint8_t sensorPrec
    \fn void Sensors::update(uint8_t menu)
    \brief Read the sensors to update the values and sends them to linux
 
-   \param menu uint8_t tells us in which page of the menu we are
+   \param 'print' to automatically display value on lcd from this function, 'send' to send value to the Linux side, 'menu' uint8_t tells us in which page of the menu we are
    \return n/a
 
 */
-void Sensors::update(uint8_t menu)
+void Sensors::update(bool print, bool send,  uint8_t menu)
 {
   unsigned short ADCvalue;
   bool bool_water;
@@ -487,10 +493,10 @@ void Sensors::update(uint8_t menu)
 #endif
 
     //Print the info
-    printinfo ( WATER_LEVEL_DNAME, water_level, 0, WATER_LEVEL_UNIT);
+    if(print == true) printinfo ( WATER_LEVEL_DNAME, water_level, 0, WATER_LEVEL_UNIT);
 
     //Send the info to linux
-    p_myBridge->sendFloat( WATER_LEVEL_NNAME, water_level);
+    if(send == true) p_myBridge->sendFloat( WATER_LEVEL_NNAME, water_level);
     //Serial.println("us");
     check++;
   }
@@ -507,12 +513,12 @@ void Sensors::update(uint8_t menu)
     Serial.println(air_temperature);
 #endif
     //Print the info
-    printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, air_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
-    printinfo ( AIR_PRESSURE_MEASUREMENT_DNAME, air_pressure, 0, AIR_PRESSURE_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, air_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( AIR_PRESSURE_MEASUREMENT_DNAME, air_pressure, 0, AIR_PRESSURE_MEASUREMENT_UNIT);
 
     //Send the info to linux
-    p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, air_temperature);
-    p_myBridge->sendInteger( AIR_PRESSURE_MEASUREMENT_NNAME,  (unsigned long)air_pressure);
+    if(send == true) p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, air_temperature);
+    if(send == true) p_myBridge->sendInteger( AIR_PRESSURE_MEASUREMENT_NNAME,  (unsigned long)air_pressure);
 
     check++;
 
@@ -525,24 +531,27 @@ void Sensors::update(uint8_t menu)
   if ( sensor_air_relative_humidity /*&& sensor_item == _item_air_relative_humidity */) { //HUMIDITY OK - TEMP INPRECISE
     if (myHum.readSample())
     {
+      air_humidity = myHum.mHumidity;
       check++;
       //Print humidity
-      printinfo ( AIR_HUMIDITY_LEVEL_MEASUREMENT_DNAME, myHum.mHumidity, 1, AIR_HUMIDITY_LEVEL_MEASUREMENT_UNIT);
-      p_myBridge->sendFloat( AIR_HUMIDITY_LEVEL_MEASUREMENT_NNAME, myHum.mHumidity);
+      if(print == true) printinfo ( AIR_HUMIDITY_LEVEL_MEASUREMENT_DNAME, air_humidity, 1, AIR_HUMIDITY_LEVEL_MEASUREMENT_UNIT);
+      if(send == true) p_myBridge->sendFloat( AIR_HUMIDITY_LEVEL_MEASUREMENT_NNAME, air_humidity);
 #ifdef DEBUG  
     Serial.print("RH:");
-    Serial.println(myHum.mHumidity);
+    Serial.println(air_humidity);
 #endif
 #if not defined(SENSOR_TYPE_PRESSURE_SENSOR ) && defined (SENSOR_TYPE_AIR_TEMPERATURE_SENSOR) && defined(SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR)
       //use the temp of this sensor if there is no other
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
       if (!(sensor_air_pressure))
+#endif
       {
 #ifdef DEBUG  
     Serial.print("Air Temp:");
     Serial.println(myHum.mTemperature);
 #endif
-        printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, myHum.mTemperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
-        p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, myHum.mTemperature);
+        if(print == true) printinfo ( AIR_TEMPERATURE_MEASUREMENT_DNAME, myHum.mTemperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
+        if(send == true) p_myBridge->sendFloat( AIR_TEMPERATURE_MEASUREMENT_NNAME, myHum.mTemperature);
       }
 #endif
     }
@@ -570,8 +579,8 @@ void Sensors::update(uint8_t menu)
       sensor_air_CO2=0;
       }*/
 
-    printinfo (AIR_CO_MEASUREMENT_DNAME, air_CO, 1, AIR_CO2_MEASUREMENT_UNIT);
-    p_myBridge->sendFloat( AIR_CO_MEASUREMENT_NNAME, air_CO);
+    if(print == true) printinfo (AIR_CO_MEASUREMENT_DNAME, air_CO, 1, AIR_CO2_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendFloat( AIR_CO_MEASUREMENT_NNAME, air_CO);
 
   }
 #endif
@@ -605,8 +614,8 @@ void Sensors::update(uint8_t menu)
 #endif
    // Serial.println(soil_temperature);
     check++;
-    printinfo (SOIL_TEMPERATURE_MEASUREMENT_DNAME, soil_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
-    p_myBridge->sendFloat( SOIL_TEMPERATURE_MEASUREMENT_NNAME, soil_temperature);
+    if(print == true) printinfo (SOIL_TEMPERATURE_MEASUREMENT_DNAME, soil_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendFloat( SOIL_TEMPERATURE_MEASUREMENT_NNAME, soil_temperature);
   }
 #endif
 
@@ -622,8 +631,8 @@ void Sensors::update(uint8_t menu)
     Serial.println(light_par);
 #endif
     check++;
-    printinfo (LIGHT_PAR_MEASUREMENT_DNAME, light_par, 1, LIGHT_PAR_MEASUREMENT_UNIT);
-    p_myBridge->sendFloat( LIGHT_PAR_MEASUREMENT_NNAME, light_par);
+    if(print == true) printinfo (LIGHT_PAR_MEASUREMENT_DNAME, light_par, 1, LIGHT_PAR_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendFloat( LIGHT_PAR_MEASUREMENT_NNAME, light_par);
   }
 #endif
 
@@ -643,8 +652,8 @@ void Sensors::update(uint8_t menu)
     check++;
     //      if ((int)val_tamp < 100) p_myLCD->BacklightConf(LOAD_TO_RAM, 20);             TO DEAL WITH
     //      else p_myLCD->BacklightConf(LOAD_TO_RAM, 100);
-    printinfo (LIGHT_UV_MEASUREMENT_DNAME, light_uv, 1, LIGHT_PAR_MEASUREMENT_UNIT /* this sensor sens PPF value , not a UV index*/);
-    p_myBridge->sendFloat( LIGHT_UV_MEASUREMENT_NNAME, light_uv);
+    if(print == true) printinfo (LIGHT_UV_MEASUREMENT_DNAME, light_uv, 1, LIGHT_PAR_MEASUREMENT_UNIT /* this sensor sens PPF value , not a UV index*/);
+    if(send == true) p_myBridge->sendFloat( LIGHT_UV_MEASUREMENT_NNAME, light_uv);
     
 
   }
@@ -660,19 +669,19 @@ void Sensors::update(uint8_t menu)
     Serial.print("/");
     Serial.println(soil_moisture);
 #endif
-    printinfo (SOIL_MOISTURE_MEASUREMENT_DNAME, soil_moisture, 1, SOIL_MOISTURE_MEASUREMENT_UNIT);
-    p_myBridge->sendFloat( SOIL_MOISTURE_MEASUREMENT_NNAME, soil_moisture);
+    if(print == true) printinfo (SOIL_MOISTURE_MEASUREMENT_DNAME, soil_moisture, 1, SOIL_MOISTURE_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendFloat( SOIL_MOISTURE_MEASUREMENT_NNAME, soil_moisture);
   }
 #endif
 #ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
   if (sensor_light_uv /*&& sensor_item == _item_light_UV*/) {
     light_lux = mySunLightSensor.ReadVisible();
-    printinfo ( LIGHT_LUX_MEASUREMENT_DNAME, light_lux, 0, LIGHT_LUX_MEASUREMENT_UNIT);
-    p_myBridge->sendInteger( LIGHT_LUX_MEASUREMENT_NNAME, (unsigned long)light_lux);
+    if(print == true) printinfo ( LIGHT_LUX_MEASUREMENT_DNAME, light_lux, 0, LIGHT_LUX_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendInteger( LIGHT_LUX_MEASUREMENT_NNAME, (unsigned long)light_lux);
 
     light_uv = mySunLightSensor.ReadUV();
-    printinfo ( LIGHT_UV_MEASUREMENT_DNAME, light_uv, 0, LIGHT_UV_MEASUREMENT_UNIT);
-    p_myBridge->sendInteger( LIGHT_UV_MEASUREMENT_NNAME, (unsigned long)light_uv);
+    if(print == true) printinfo ( LIGHT_UV_MEASUREMENT_DNAME, light_uv, 0, LIGHT_UV_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendInteger( LIGHT_UV_MEASUREMENT_NNAME, (unsigned long)light_uv);
   }
 #endif
 #ifdef SENSOR_TYPE_WATER_ORP_SENSOR
@@ -682,12 +691,12 @@ void Sensors::update(uint8_t menu)
       if (bool_water == false) sensor_water_orp = 0;
       else {
         water_orp = atof(myEZO.getData());
-        p_myBridge->sendFloat( WATER_ORP_MEASUREMENT_NNAME, water_orp);
+        if(send == true) p_myBridge->sendFloat( WATER_ORP_MEASUREMENT_NNAME, water_orp);
         //sensor_water=_item_rtd;
       }
     }
     check++;
-    printinfo ( WATER_ORP_MEASUREMENT_DNAME, water_orp, 1, WATER_ORP_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( WATER_ORP_MEASUREMENT_DNAME, water_orp, 1, WATER_ORP_MEASUREMENT_UNIT);
   }
 #endif
 #ifdef SENSOR_TYPE_WATER_DO_SENSOR
@@ -701,13 +710,13 @@ void Sensors::update(uint8_t menu)
     Serial.print("Water DO:");
     Serial.println(water_do);
 #endif
-        p_myBridge->sendFloat( WATER_DO_MEASUREMENT_NNAME, water_do);
+        if(send == true) p_myBridge->sendFloat( WATER_DO_MEASUREMENT_NNAME, water_do);
         //sensor_water++;
         //sensor_water++;
       }
     }
     check++;
-    printinfo ( WATER_DO_MEASUREMENT_DNAME, water_do, 1, WATER_DO_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( WATER_DO_MEASUREMENT_DNAME, water_do, 1, WATER_DO_MEASUREMENT_UNIT);
   }
 #endif  
 #ifdef SENSOR_TYPE_WATER_EC_SENSOR
@@ -721,12 +730,12 @@ void Sensors::update(uint8_t menu)
     Serial.print("Water EC:");
     Serial.println(water_ec);
 #endif
-        p_myBridge->sendFloat( WATER_EC_MEASUREMENT_NNAME, water_ec);
+        if(send == true) p_myBridge->sendFloat( WATER_EC_MEASUREMENT_NNAME, water_ec);
         //sensor_water++;
       }
     }
     check++;
-    printinfo ( WATER_EC_MEASUREMENT_DNAME, water_ec, 1, WATER_EC_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( WATER_EC_MEASUREMENT_DNAME, water_ec, 1, WATER_EC_MEASUREMENT_UNIT);
 
   }
 #endif
@@ -741,13 +750,13 @@ void Sensors::update(uint8_t menu)
     Serial.print("Water PH:");
     Serial.println(water_ph);
 #endif
-        p_myBridge->sendFloat( WATER_PH_MEASUREMENT_NNAME, water_ph);
+        if(send == true) p_myBridge->sendFloat( WATER_PH_MEASUREMENT_NNAME, water_ph);
         //sensor_water++;
       }
     }
     // if ((int)water_ph > 0 && (int)water_ph < 14) {
     check++;
-    printinfo ( WATER_PH_MEASUREMENT_DNAME, water_ph, 1, WATER_PH_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( WATER_PH_MEASUREMENT_DNAME, water_ph, 1, WATER_PH_MEASUREMENT_UNIT);
 
   }
   //}
@@ -763,12 +772,12 @@ void Sensors::update(uint8_t menu)
     Serial.print("Water Temp:");
     Serial.println(water_temperature);
 #endif
-        p_myBridge->sendFloat(WATER_TEMPERATURE_MEASUREMENT_NNAME, water_temperature);
+        if(send == true) p_myBridge->sendFloat(WATER_TEMPERATURE_MEASUREMENT_NNAME, water_temperature);
         //sensor_water++;
       }
     }
     check++;
-    printinfo ( WATER_TEMPERATURE_MEASUREMENT_DNAME, water_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
+    if(print == true) printinfo ( WATER_TEMPERATURE_MEASUREMENT_DNAME, water_temperature, 1, TEMPERATURE_MEASUREMENT_UNIT);
   }
 #endif
 
@@ -780,13 +789,15 @@ void Sensors::update(uint8_t menu)
     Serial.print("CO2:");
     Serial.println(myCO2.ppm);
 #endif
-    printinfo ( AIR_CO2_MEASUREMENT_DNAME, myCO2.ppm, 0, AIR_CO2_MEASUREMENT_UNIT);
-    p_myBridge->sendInteger(AIR_CO2_MEASUREMENT_NNAME, myCO2.ppm);
+    if(print == true) printinfo ( AIR_CO2_MEASUREMENT_DNAME, myCO2.ppm, 0, AIR_CO2_MEASUREMENT_UNIT);
+    if(send == true) p_myBridge->sendInteger(AIR_CO2_MEASUREMENT_NNAME, myCO2.ppm);
   }
 #endif
 
+#ifdef USE_MENU
   if (!check && !menu)
     p_myLCD->DispStringAt("No sensor", 6 * CHAR_OFFSET, 1 * ROW_OFFSET);
+#endif
 
 #ifdef DEBUG
   Serial.println("");

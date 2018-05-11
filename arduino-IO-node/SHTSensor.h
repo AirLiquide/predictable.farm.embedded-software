@@ -30,7 +30,12 @@
 #define SHTSENSOR_H
 
 #include "SensorTypes.h"
+
+#ifndef I2CLIB
 #include <Wire.h>
+#else
+#include "I2C.h"
+#endif
 #include <Arduino.h>
 
 
@@ -95,6 +100,7 @@ public:
   float mTemperature;
   float mHumidity;
 private:
+  void periodicDataAcquisition(uint8_t i2cAddress);
   void cleanup();
   SHTSensorType mSensorType;
   SHTSensorDriver *mSensor;

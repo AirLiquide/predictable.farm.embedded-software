@@ -1,4 +1,4 @@
-/*
+  /*
   Copyright (C) Air Liquide S.A,  2017
   Author : Sébastien Lalaurette and Gwennaëlle Remy, La Factory, Creative Foundry
   This file is part of Predictable Farm embedded software project.
@@ -25,8 +25,13 @@
   #include "WProgram.h"
 #endif
 
-#include <SoftwareSerial.h>
+#include "config.h"
+
+#ifndef I2CLIB
 #include "Wire.h"
+#else
+#include "I2C.h"
+#endif
 #include "LCD.h"
 
 #define RELAY1_ADDR 0X20 //V2
@@ -62,8 +67,8 @@ class Relay
     LCD * p_myLCD;
     uint8_t prev;
     uint8_t relay_addr;
-    void Relay::configure();
-    void Relay::setupState(uint8_t state, uint8_t swtch);
+    void configure();
+    void setupState(uint8_t state, uint8_t swtch);
 
 };
 #endif

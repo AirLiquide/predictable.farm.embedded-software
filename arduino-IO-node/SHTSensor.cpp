@@ -30,9 +30,13 @@
 #include "SHTSensor.h"
 
 #ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
+
+//#define PERIODIC //data acquisition
+
 //
 // class SHTI2cSensor
 //
+
 
 const uint8_t SHTI2cSensor::CMD_SIZE            = 2;
 const uint8_t SHTI2cSensor::EXPECTED_DATA_SIZE  = 6;
@@ -40,12 +44,24 @@ const uint8_t SHTI2cSensor::EXPECTED_DATA_SIZE  = 6;
 
 bool SHTI2cSensor::readFromI2c(uint8_t i2cAddress, const uint8_t *i2cCommand, uint8_t commandLength, uint8_t *data, uint8_t dataLength)
 {
+#ifndef I2CLIB
   Wire.beginTransmission(i2cAddress);
+
+  
+#ifdef PERIODIC
+   if (Wire.write(0xe0) != 1) {
+      return false;
+    } 
+    if (Wire.write(0x00) != 1) {
+      return false;
+    }
+#else
   for (int i = 0; i < commandLength; ++i) {
     if (Wire.write(i2cCommand[i]) != 1) {
       return false;
     }
   }
+#endif
 
   if (Wire.endTransmission(false) != 0) {
     return false;
@@ -56,17 +72,67 @@ bool SHTI2cSensor::readFromI2c(uint8_t i2cAddress, const uint8_t *i2cCommand, ui
   // there should be no reason for this to not be ready, since we're using clock
   // stretching mode, but just in case we'll try a few times
   /*uint8_t tries = 1;
-  while (Wire.available() < dataLength) {
+    while (Wire.available() < dataLength) {
     delay(1);
     if (tries++ >= MAX_I2C_READ_TRIES) {
       return false;
     }
-  }*/
+    }*/
 
   for (int i = 0; i < dataLength; ++i) {
     data[i] = Wire.read();
   }
+
   return true;
+#else
+  bool returnStatus = I2c.start();
+  if (returnStatus) {
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendAddress(SLA_W(i2cAddress));
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (2);
+    }
+    return (returnStatus);
+  }
+  #ifdef PERIODIC
+    returnStatus = I2c.sendByte(0xe0);
+    if (returnStatus)
+    {
+      if (returnStatus == 1) {
+        return (3);
+      }
+      return (returnStatus);
+    }
+    returnStatus = I2c.sendByte(0x00);
+    if (returnStatus)
+    {
+      if (returnStatus == 1) {
+        return (3);
+      }
+      return (returnStatus);
+    }
+#else
+  for (int i = 0; i < commandLength; ++i) {
+    returnStatus = I2c.sendByte(i2cCommand[i]);
+    if (returnStatus)
+    {
+      if (returnStatus == 1) {
+        return (3);
+      }
+      return (returnStatus);
+    }
+  }
+#endif
+
+  returnStatus = I2c.read(i2cAddress, dataLength, data);
+  if (returnStatus) return false;
+  else return true;
+
+
+#endif
 }
 
 uint8_t SHTI2cSensor::crc8(const uint8_t *data, uint8_t len)
@@ -99,7 +165,7 @@ bool SHTI2cSensor::readSample()
   cmd[0] = mI2cCommand >> 8;
   cmd[1] = mI2cCommand & 0xff;
 
-  if (!readFromI2c(mI2cAddress, cmd, CMD_SIZE, data,EXPECTED_DATA_SIZE)) {
+  if (!readFromI2c(mI2cAddress, cmd, CMD_SIZE, data, EXPECTED_DATA_SIZE)) {
     return false;
   }
 
@@ -132,8 +198,8 @@ bool SHTI2cSensor::readSample()
 class SHT3xSensor : public SHTI2cSensor
 {
   private:
-    static const uint16_t SHT3X_ACCURACY_HIGH    = 0x2c06;
-    //static const uint16_t SHT3X_ACCURACY_MEDIUM  = 0x2c0d;
+    //static const uint16_t SHT3X_ACCURACY_HIGH    = 0x2c06;
+    static const uint16_t SHT3X_ACCURACY_MEDIUM  = 0x2c0d;
     //static const uint16_t SHT3X_ACCURACY_LOW     = 0x2c10;
 
   public:
@@ -141,13 +207,13 @@ class SHT3xSensor : public SHTI2cSensor
     static const uint8_t SHT3X_I2C_ADDRESS_45 = 0x45;
 
     SHT3xSensor(uint8_t i2cAddress = SHT3X_I2C_ADDRESS_44)
-      : SHTI2cSensor(i2cAddress, SHT3X_ACCURACY_HIGH,
+      : SHTI2cSensor(i2cAddress, SHT3X_ACCURACY_MEDIUM,
                      -45, 175, 65535, 100, 65535)
     {
     }
 
     /*virtual bool setAccuracy(SHTSensor::SHTAccuracy newAccuracy)
-    {
+      {
       switch (newAccuracy) {
         case SHTSensor::SHT_ACCURACY_HIGH:
           mI2cCommand = SHT3X_ACCURACY_HIGH;
@@ -162,7 +228,7 @@ class SHT3xSensor : public SHTI2cSensor
           return false;
       }
       return true;
-    }*/
+      }*/
 };
 
 
@@ -183,19 +249,99 @@ bool SHTSensor::init()
 {
   cleanup();
   mSensor = new SHT3xSensor();
+#ifdef PERIODIC
+  periodicDataAcquisition(0x44);
+#endif
   return (mSensor != NULL);
 }
 
 
+void SHTSensor::periodicDataAcquisition(uint8_t i2cAddress)
+{
+#ifndef I2CLIB
+  Wire.beginTransmission(i2cAddress);
+  /* stop internal heater */
+  if (Wire.write(0x30) != 1) {
+    return false;
+  }
+  if (Wire.write(0x66) != 1) {
+    return false;
+  }
+  if (Wire.endTransmission(false) != 0) {
+    return false;
+  }
+  Wire.beginTransmission(i2cAddress);
+  /* periodic data acquisition */
+  if (Wire.write(0x20) != 1) {
+    return false;
+  }
+  if (Wire.write(0x24) != 1) {
+    return false;
+  }
+  if (Wire.endTransmission(false) != 0) {
+    return false;
+  }
+  return true;
+#else
+  bool returnStatus = I2c.start();
+  if (returnStatus) {
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendAddress(SLA_W(i2cAddress));
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (2);
+    }
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendByte(0x30);
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (3);
+    }
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendByte(0x66);
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (3);
+    }
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendByte(0x20);
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (3);
+    }
+    return (returnStatus);
+  }
+  returnStatus = I2c.sendByte(0x24);
+  if (returnStatus)
+  {
+    if (returnStatus == 1) {
+      return (3);
+    }
+    return (returnStatus);
+  }
+
+  return true;
+
+#endif
+}
+
 bool SHTSensor::readSample()
 {
   if (!mSensor || !mSensor->readSample())
-        {
-          return false;
-        }
+  {
+    return false;
+  }
   mTemperature = mSensor->mTemperature;
   mHumidity = mSensor->mHumidity;
-  
+
   return true;
 }
 /*

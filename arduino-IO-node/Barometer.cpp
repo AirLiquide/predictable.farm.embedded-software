@@ -26,9 +26,9 @@
 
 #ifdef SENSOR_TYPE_PRESSURE_SENSOR
 
-#include <Wire.h>
 
 
+#ifndef I2CLIB
 static uint8_t i2cread(void) {
   uint8_t x;
 #if ARDUINO >= 100
@@ -48,6 +48,8 @@ static void i2cwrite(uint8_t x) {
 #endif
 }
 
+#endif
+
 /**************************************************************************/
 /*!
     @brief  Gets the factory-set coefficients for this particular sensor
@@ -59,6 +61,7 @@ void Barometer::readCoefficients() {
   int16_t b2coeff;
   int16_t c12coeff;
 
+#ifndef I2CLIB
   Wire.beginTransmission(MPL115A2_ADDRESS);
   i2cwrite((uint8_t)MPL115A2_REGISTER_A0_COEFF_MSB);
   Wire.endTransmission();
@@ -68,6 +71,19 @@ void Barometer::readCoefficients() {
   b1coeff = (( (uint16_t) i2cread() << 8) | i2cread());
   b2coeff = (( (uint16_t) i2cread() << 8) | i2cread());
   c12coeff = (( (uint16_t) (i2cread() << 8) | i2cread())) >> 2;
+#else
+  uint8_t data[8];
+  uint8_t result = 0;
+  result = I2c.read(MPL115A2_ADDRESS,MPL115A2_REGISTER_A0_COEFF_MSB,8,data);
+  if(result) return;
+  else 
+  {
+    a0coeff = (( (uint16_t) data[0]<< 8) | data[1]);
+    b1coeff = (( (uint16_t) data[2] << 8) | data[3]);
+    b2coeff = (( (uint16_t) data[4] << 8) | data[5]);
+    c12coeff = (( (uint16_t) (data[6] << 8) | data[7])) >> 2;
+  }
+#endif
 
   /*
     Serial.print("A0 = "); Serial.println(a0coeff, HEX);
@@ -147,15 +163,20 @@ void Barometer::getPT(float *P, float *T) {
   uint16_t   pressure, temp;
   float     pressureComp;
 
+
+#ifndef I2CLIB
   // Get raw pressure and temperature settings
   Wire.beginTransmission(MPL115A2_ADDRESS);
   i2cwrite((uint8_t)MPL115A2_REGISTER_STARTCONVERSION);
   i2cwrite((uint8_t)0x00);
   Wire.endTransmission();
-
+#else
+  if(I2c.write(MPL115A2_ADDRESS,MPL115A2_REGISTER_STARTCONVERSION,0x00) > 0) return;
+#endif
   // Wait a bit for the conversion to complete (3ms max)
   delay(5);
 
+#ifndef I2CLIB
   Wire.beginTransmission(MPL115A2_ADDRESS);
   i2cwrite((uint8_t)MPL115A2_REGISTER_PRESSURE_MSB);  // Register
   Wire.endTransmission();
@@ -163,7 +184,17 @@ void Barometer::getPT(float *P, float *T) {
   Wire.requestFrom(MPL115A2_ADDRESS, 4);
   pressure = (( (uint16_t) i2cread() << 8) | i2cread()) >> 6;
   temp = (( (uint16_t) i2cread() << 8) | i2cread()) >> 6;
-
+#else
+  uint8_t data[4];
+  uint8_t result = 0;
+  result = I2c.read(MPL115A2_ADDRESS,MPL115A2_REGISTER_PRESSURE_MSB,4,data);
+  if(result) return;
+  else 
+  {
+    pressure = (( (uint16_t) data[0]<< 8) | data[1] ) >> 6;
+    temp = (( (uint16_t) data[2] << 8) | data[3])  >> 6;
+  }
+#endif
   // See datasheet p.6 for evaluation sequence
   pressureComp = _mpl115a2_a0 + (_mpl115a2_b1 + _mpl115a2_c12 * temp ) * pressure + _mpl115a2_b2 * temp;
 

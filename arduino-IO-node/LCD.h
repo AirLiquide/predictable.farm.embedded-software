@@ -22,16 +22,22 @@
 #ifndef __LCD_H_
 #define __LCD_H_
 
-
+#include "config.h"
 #include <Arduino.h>
 //#include <avr/pgmspace.h>
+
+
+#ifndef I2CLIB
 #include <Wire.h>
+#else
+#include "I2C.h"
+#endif
 
 #include <inttypes.h>
 //#include "Print.h"
 
 
-#define ROW_OFFSET 10
+#define ROW_OFFSET 11
 
 #define CHAR_OFFSET 6 /*6x8 font*/
 
@@ -82,6 +88,7 @@
          ReadSeriesFromReg()
          WriteSeriesToReg()
 ***************************************************************/
+
 #define     I2C_BUS_Init()                               Wire.begin()                       /*Init I2C IOs or hardware I2C register*/
 #define     I2C_BUS_BeginTransmission(addr)              Wire.beginTransmission(addr)       /*Send I2C start signal*/
 #define     I2C_BUS_EndTransmission(addr)                Wire.endTransmission(addr)         /*Send I2C stop signal*/
@@ -438,10 +445,12 @@ enum LCD_ColorSort
 
 enum LCD_CharMode
 {
-  WHITE_BAC = 0x00,
-  WHITE_NO_BAC = 0x40,
-  BLACK_BAC = 0x80,
-  BLACK_NO_BAC = 0xc0
+  
+
+  BLACK_BAC = 0x00,
+  BLACK_NO_BAC = 0x40,
+  WHITE_BAC = 0x80,
+  WHITE_NO_BAC = 0xc0
 };
 
 enum LCD_DrawMode
@@ -508,7 +517,6 @@ class LCD: public Print
     void Init(void);
     uint8_t ReadByteFromReg(enum LCD_RegAddress regAddr);
     void WriteByteToReg(enum LCD_RegAddress regAddr, uint8_t buf);
-    void ReadSeriesFromReg(enum LCD_RegAddress regAddr, uint8_t *buf, int8_t length);
     void WriteSeriesToReg(enum LCD_RegAddress regAddr, const uint8_t *buf, uint8_t length);
 
 #ifdef  SUPPORT_FULL_API_LIB
@@ -534,16 +542,10 @@ class LCD: public Print
     void DrawLineAt(uint8_t startX, uint8_t endX, uint8_t startY, uint8_t endY, enum LCD_ColorSort color);
     void DrawRectangleAt(uint8_t x, uint8_t y, uint8_t width, uint8_t height, enum LCD_DrawMode mode);
     void DrawCircleAt(int8_t x, int8_t y, uint8_t r, enum LCD_DrawMode mode);
-    void DrawScreenAreaAt(GUI_Bitmap_t *bitmap, uint8_t x, uint8_t y);
-    void DrawFullScreen(const uint8_t *buf);
 
 #endif
 #endif
 
-    uint8_t ReadByteDispRAM(uint8_t x, uint8_t y);
-    void WriteByteDispRAM(uint8_t buf, uint8_t x, uint8_t y);
-    void ReadSeriesDispRAM(uint8_t *buf, int8_t length, uint8_t x, uint8_t y);
-    void WriteSeriesDispRAM(uint8_t *buf, int8_t length, uint8_t x, uint8_t y);
     //void ReadByteTest(enum LCD_RegAddress regAddr);
 
 
@@ -556,10 +558,10 @@ class LCD: public Print
     void CleanAll(enum LCD_ColorSort color);
 
   private:
+    uint8_t DisplayConfigRegVal;
     void ReadRAMGotoXY(uint8_t x, uint8_t y);
     void WriteRAMGotoXY(uint8_t x, uint8_t y);
 
-    void SendBitmapData(const uint8_t *buf, uint8_t length);
 
 #endif
 #endif

@@ -29,9 +29,16 @@
 #include "WProgram.h"
 #endif
 
+#include "config.h"
+
+#ifndef I2CLIB
 #include <Wire.h>
+#else
+#include "I2C.h"
+#endif
 #include "SensorTypes.h"
 
+#ifdef SENSOR_TYPE_CO2_SENSOR
 //Device Address
 
 //A:VDD
@@ -165,7 +172,7 @@ class SC16IS750 : public Stream
 };
 #endif
 
-
+#endif /*SENSOR_TYPE_CO2_SENSOR*/
 
 
 

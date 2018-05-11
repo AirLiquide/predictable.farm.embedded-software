@@ -1,3 +1,5 @@
+
+
 /*
   Copyright (C) Air Liquide S.A,  2017
   Author : Sébastien Lalaurette and Gwennaëlle Remy, La Factory, Creative Foundry
@@ -16,8 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include <SoftwareSerial.h>
+#include "config.h"
 #include "Relay.h"
 #include "YunBridge.h"
 #include "SensorTypes.h"
@@ -56,21 +57,34 @@ LCD myLCD;
 YunBridge bridge;
 Relay relay;
 Sensors mySensors;
+#ifdef USE_MENU
 Menu myMenu;
+#endif
 
 
 void setup()
 {
 
   Serial.begin(9600);
-  Wire.begin();
-  Wire.setClock(50000);
 
+  
 #ifdef DEBUG
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 #endif
+
+   
+#ifndef I2CLIB
+  Wire.begin();
+  //Wire.setClock(10000);
+#else
+  I2c.reset();
+  I2c.begin();
+  I2c.timeOut(80);
+  I2c.setSpeed(0);
+#endif
+
 
   // initialize classes
   bridge.init();
@@ -84,16 +98,41 @@ void setup()
   relay.init(&myLCD);
   mySensors.init(&myLCD, &bridge);
 
-
 #ifdef LCD_DISPLAY
   //Clean the screen with black or white.
   myLCD.CleanAll(WHITE);    //Clean the screen with black or white.
 #endif
-
-
+#ifdef USE_MENU
   myMenu.init(&myLCD, &mySensors, &relay);
   menu = myMenu.getCurrentMenuIndex();
+#endif
 
+    
+#ifdef USE_DASHBOARD_VIEW
+//delimiter for date
+
+        myLCD.DrawHLineAt(0, LCD_X_SIZE_MAX-1, ROW_OFFSET -2, WHITE);
+//delimiter for time
+        //myLCD.DrawVLineAt(0, ROW_OFFSET -2, (CHAR_OFFSET*15)-2, WHITE);
+//delimiter for status bits
+            myLCD.DrawHLineAt(0,LCD_X_SIZE_MAX-1,(5* ROW_OFFSET)-3,WHITE);
+// delimiter for device ID bottom right corner
+          myLCD.DrawVLineAt((5* ROW_OFFSET)-3, LCD_Y_SIZE_MAX-1, (15*CHAR_OFFSET) -2, WHITE);
+          //inside symbol
+         myLCD.DrawRectangleAt(0, 2* ROW_OFFSET , 11, 7, WHITE_NO_FILL);
+    myLCD.DrawCircleAt(5, 2* ROW_OFFSET+3 , 2, WHITE_FILL);
+    
+          //outside symbol
+    myLCD.DrawCircleAt(5, 3* ROW_OFFSET+3 , 2, WHITE_FILL);
+  //notification area
+            myLCD.DrawHLineAt(0,LCD_X_SIZE_MAX-1,(4* ROW_OFFSET)-3,WHITE);
+
+            
+     /*   myLCD.DispStringAt("12:23",CHAR_OFFSET*15,0);
+        //myLCD.DispStringAt("Custom",0,ROW_OFFSET);
+        myLCD.DispStringAt("SAM 25 JUL",0,0);     
+        myLCD.DispStringAt("RDV DENTISTE 16H15",0,(4* ROW_OFFSET));*/
+#endif
 
 #ifdef DEBUG
   Serial.println("ready");
@@ -104,9 +143,16 @@ void setup()
 uint8_t updateCounter = CALL_WATER_SENSOR;
 void loop()
 {
-
+  char buf[21];
+  memset(buf,0,21);
+#ifdef DEBUG
+  Serial.print(".");
+#endif
   previousMillis = millis();
-
+  
+#ifdef I2CLIB
+  I2c.begin();
+#endif
   /********************************************/
   /* update sensors values                    */
   /********************************************/
@@ -124,14 +170,56 @@ void loop()
     mySensors.waterCall();// We call the water sensors
   }
   if (updateCounter == VALUE_SENSOR_SEND_LINUX) {
-    mySensors.update(menu);
+#ifdef USE_MENU
+    mySensors.update(true, true, menu);
+#endif
+    
+#ifdef USE_DASHBOARD_VIEW
+    // update sensor and store value in variables
+    mySensors.update(false, true, 0);
+
+#ifdef LCD_DISPLAY
+    // update screen content
+    myLCD.DispStringAt("               ",CHAR_OFFSET*3,2* ROW_OFFSET);
+    myLCD.CharGotoXY(CHAR_OFFSET*3, 2* ROW_OFFSET);
+    #if 1
+    float temp = 19.43;
+    if(temp > -10) myLCD.CharGotoXY(CHAR_OFFSET*4, 2* ROW_OFFSET);
+    myLCD.print(temp,0);
+    myLCD.DrawCircleAt((CHAR_OFFSET*6)+2, 2* ROW_OFFSET, 1, WHITE_NO_FILL); //degree symbol
+    myLCD.DispStringAt("C ",CHAR_OFFSET*7,2* ROW_OFFSET);
+    //Relative humidtity
+    myLCD.print(32.87,0);
+    myLCD.print("% ");
+    //goutte d'eau : disc + point
+    myLCD.DrawCircleAt((CHAR_OFFSET*12)+2, 2* ROW_OFFSET + 4, 2, WHITE_FILL);
+    myLCD.DrawDotAt((CHAR_OFFSET*12)+2, 2* ROW_OFFSET + 1, WHITE);
+    //co2
+    myLCD.CharGotoXY(CHAR_OFFSET*14, 2* ROW_OFFSET);
+    myLCD.print(1192);
+    myLCD.print("ppm");
+    #endif
+#ifdef SENSOR_TYPE_AIR_TEMPERATURE_SENSOR
+    myLCD.print(mySensors.air_temperature,0);
+    myLCD.print("\'C ");
+#endif
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
+    myLCD.print(mySensors.air_humidity,0);
+    myLCD.print("% ");
+#endif /*SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR*/
+#ifdef SENSOR_TYPE_CO2_SENSOR
+    myLCD.print(mySensors.air_CO2);
+    myLCD.print("ppm");
+#endif /*SENSOR_TYPE_CO2_SENSOR*/
+#endif /* LCD_DISPLAY*/
+#endif /* USE_DASHBOARD_VIEW*/;
 
     /*****************************************************/
     /* send commands, status or values to the Linux side */
     /*****************************************************/
 
 
-    while (bridge.getCommand(&bridgeCommandType, &bridgeCommandValue) > 0)
+    while (bridge.getCommand(&bridgeCommandType, &bridgeCommandValue,buf) > 0)
     {
       uint8_t num = bridgeCommandType - BRIDGE_RELAY_1;
       switch (bridgeCommandType)
@@ -152,20 +240,74 @@ void loop()
               else relay.setState(1, num);
               if ((bridgeCommandValue & 0x2)  == RELAY_MODE_AUTO) relay.setMode(RELAY_MODE_AUTO, num);
               else relay.setMode(RELAY_MODE_MANUAL, num);
-              relay.popup(num + 1);
+              relay.popup(num);
             }
           }
           break;
         case BRIDGE_OS:
-          bridge.linuxReady = (bridgeCommandValue == BRIDGE_OS_UP);
+          bridge.linuxReady = (bridgeCommandValue == BRIDGE_OS_UP);          
+#ifdef USE_MENU
           if (myMenu.getCurrentMenuIndex() == n_menu_main) // update id displayed on main menu
             myMenu.mainMenu();
+#endif
           break;
         case BRIDGE_DEVICE:
           bridge.deviceID = bridgeCommandValue;
+#ifdef USE_MENU
           if (myMenu.getCurrentMenuIndex() == n_menu_main) // update id displayed on main menu
             myMenu.mainMenu();
+#endif
+
+#ifdef USE_DASHBOARD_VIEW
+          myLCD.DispStringAt("ID:",15*CHAR_OFFSET,5* ROW_OFFSET);
+          myLCD.print(bridge.deviceID);
+#endif
           break;
+
+#ifdef USE_DASHBOARD_VIEW
+          case BRIDGE_SYSTEM_TIME: 
+            myLCD.DispStringAt(buf,0,0);
+            
+            Serial.print("time:");
+            Serial.println(buf);
+            break;          
+       /*  case BRIDGE_SYSTEM_DATE: 
+            myLCD.DispStringAt(buf,0,0);
+            break;*/
+         case BRIDGE_SYSTEM_NOTIF: 
+            myLCD.DispStringAt(buf,0,5* ROW_OFFSET);
+            break;         
+         case BRIDGE_STATE_SCENARIO: 
+            if(bridgeCommandValue) myLCD.DispCharAt("S",9 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",9 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            break; 
+         case BRIDGE_STATE_WINDOW: 
+            if(bridgeCommandValue) myLCD.DispCharAt("F",1 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",9 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            break; 
+         case BRIDGE_STATE_UP: 
+            if(bridgeCommandValue) myLCD.DispCharAt("+",0, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",0, 6 * ROW_OFFSET);
+            break; 
+         case BRIDGE_STATE_DOWN: 
+            if(bridgeCommandValue) myLCD.DispCharAt("-",2 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",2 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            break; 
+         case BRIDGE_STATE_LIGHT: 
+            if(bridgeCommandValue) myLCD.DispCharAt("L",5 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",5 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            break; 
+       case BRIDGE_STATE_CLIMATE: 
+            if(bridgeCommandValue) myLCD.DispCharAt("C",7 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            else myLCD.DispCharAt(" ",7 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            break;
+         case BRIDGE_SYSTEM_REMOTE_INFO1: 
+            myLCD.DispStringAt(buf,0,1* ROW_OFFSET);
+            break;
+         case BRIDGE_SYSTEM_REMOTE_INFO2: 
+            myLCD.DispStringAt(buf,0,4* ROW_OFFSET);
+            break;
+#endif  /*USE_DASHBOARD_VIEW*/
         case BRIDGE_SYSTEM_CONFIG:
         case BRIDGE_SYSTEM_REBOOT:
         case BRIDGE_SYSTEM_UPDATE:
@@ -182,8 +324,15 @@ void loop()
         case BRIDGE_NETWORK:
           bridge.networkReady = bridge.linuxReady && (bridgeCommandValue > BRIDGE_NETWORK_UP);
           bridge.socketReady = bridge.linuxReady && (bridgeCommandValue == BRIDGE_NETWORK_SOCKET);
+#ifdef USE_MENU
           if (myMenu.getCurrentMenuIndex() == n_menu_main) // update network status
             myMenu.mainMenu();
+#endif
+#ifdef USE_DASHBOARD_VIEW
+        if(bridge.socketReady) myLCD.DispCharAt("#",11 * CHAR_OFFSET, 6 * ROW_OFFSET);
+         else myLCD.DispCharAt(" ",11 * CHAR_OFFSET, 6 * ROW_OFFSET);
+#endif  /*USE_DASHBOARD_VIEW*/
+
           break;
         default:
 
@@ -219,12 +368,17 @@ void loop()
 
 #ifdef LCD_DISPLAY
 
+#ifdef USE_MENU
   /*****************************************************/
   /*  MENU DISPLAY                                     */
   /*****************************************************/
   menu = myMenu.printMenu(menu);
-
+#endif /*USE MENU*/
 #endif /* LCD_DISPLAY */
+#ifdef I2CLIB
+  I2c.end();
+#endif
+
   elapsed = (millis() - previousMillis);
   if (elapsed < TIME_CYCLE_MS) delay(TIME_CYCLE_MS -  elapsed); //loop every 150 msec exactly
 

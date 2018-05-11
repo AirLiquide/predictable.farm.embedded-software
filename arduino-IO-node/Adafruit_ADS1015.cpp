@@ -24,10 +24,10 @@
 #include "WProgram.h"
 #endif
 
-#include <Wire.h>
 
 #include "Adafruit_ADS1015.h"
 
+#ifndef I2CLIB
 /**************************************************************************/
 /*!
     @brief  Abstract away platform differences in Arduino wire library
@@ -54,17 +54,27 @@ static void i2cwrite(uint8_t x) {
 #endif
 }
 
+#endif
 /**************************************************************************/
 /*!
     @brief  Writes 16-bits to the specified destination register
 */
 /**************************************************************************/
 static void writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t value) {
+  
+#ifndef I2CLIB
   Wire.beginTransmission(i2cAddress);
   i2cwrite((uint8_t)reg);
   i2cwrite((uint8_t)(value >> 8));
   i2cwrite((uint8_t)(value & 0xFF));
   Wire.endTransmission();
+#else
+  uint8_t result;
+  uint8_t data[2];
+  data[0] = value >> 8;
+  data[1] = value & 0xFF;
+  result = I2c.write(i2cAddress,reg,data,2);
+#endif
 }
 
 /**************************************************************************/
@@ -73,11 +83,20 @@ static void writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t value) {
 */
 /**************************************************************************/
 static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
+  
+#ifndef I2CLIB
   Wire.beginTransmission(i2cAddress);
   i2cwrite(ADS1015_REG_POINTER_CONVERT);
   Wire.endTransmission();
   Wire.requestFrom(i2cAddress, (uint8_t)2);
   return ((i2cread() << 8) | i2cread());
+#else  
+  uint8_t ret = 0;
+  uint8_t result[2] ;
+  ret = I2c.read(i2cAddress, ADS1015_REG_POINTER_CONVERT,2, result);
+  if(ret) return 0;
+  else return ((result[0] << 8) | result[1]);
+#endif 
 }
 
 /**************************************************************************/

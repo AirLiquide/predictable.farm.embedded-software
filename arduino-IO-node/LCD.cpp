@@ -22,7 +22,6 @@
 
 #include "LCD.h"
 
-//#define NOLCD
 
 
 /*const Font_Info_t fontInfo[LCD_NUM_OF_FONT] =
@@ -46,8 +45,12 @@ LCD::LCD(void) {};
 void LCD::Init(void)
 {
 #ifndef NOLCD
+
+#ifndef I2CLIB
   I2C_BUS_Init();
-  
+#else
+  I2c.begin();
+#endif
 #endif
 }
 
@@ -57,6 +60,8 @@ void LCD::Init(void)
 uint8_t LCD::ReadByteFromReg(enum LCD_RegAddress regAddr)
 {
 #ifndef NOLCD
+
+#if 0
   int8_t waitTime;
   I2C_BUS_BeginTransmission(LCD_ADDRESS);
   I2C_BUS_WriteByte(regAddr);
@@ -71,8 +76,25 @@ uint8_t LCD::ReadByteFromReg(enum LCD_RegAddress regAddr)
     return I2C_BUS_ReadByte();
   }
   else
-#endif
     return 0;
+#else
+  uint8_t val = 0;
+ /* if (I2c.read(LCD_ADDRESS,regAddr,1,&val) == 0)
+    return val;
+  else
+    return 0;*/
+   
+/*    I2c.start();
+    I2c.sendAddress(LCD_ADDRESS);
+    I2c.sendByte(regAddr);
+    I2c.stop();
+    val = I2c.receiveByte(0);*/
+    return val;
+    
+#endif
+#else
+    return 0;
+#endif
 }
 
 /**************************************************************
@@ -81,39 +103,18 @@ uint8_t LCD::ReadByteFromReg(enum LCD_RegAddress regAddr)
 void LCD::WriteByteToReg(enum LCD_RegAddress regAddr, uint8_t buf)
 {
 #ifndef NOLCD
+#ifndef I2CLIB
   I2C_BUS_BeginTransmission(LCD_ADDRESS);
   I2C_BUS_WriteByte(regAddr);
   I2C_BUS_WriteByte(buf);
   I2C_BUS_EndTransmission();
+#else
+  I2c.write(LCD_ADDRESS,regAddr,buf);
+#endif
 #endif
 }
 
-/**************************************************************
-      Read multiple bytes from device register.
-***************************************************************/
-void LCD::ReadSeriesFromReg(enum LCD_RegAddress regAddr, uint8_t *buf, int8_t length)
-{
-#ifndef NOLCD
-  int8_t i, waitTime;
-  I2C_BUS_BeginTransmission(LCD_ADDRESS);
-  I2C_BUS_WriteByte(regAddr);
-  I2C_BUS_EndTransmission();
-  if (length > 32)
-    length = 32;
-  I2C_BUS_RequestFrom((int16_t)LCD_ADDRESS, length);
-  for (waitTime = 10; !I2C_BUS_Available() && waitTime; waitTime--)
-    __asm__("nop\n\t");
-  for (i = 0; i < length; i++)
-  {
-    buf[i] = I2C_BUS_ReadByte();
-    //Serial.print(buf[i], HEX);
-    //Serial.print(" ");
-    for (waitTime = 10; !I2C_BUS_Available() && waitTime; waitTime--)
-      __asm__("nop\n\t");
-  }
-  I2C_BUS_EndTransmission();
-#endif
-}
+
 
 /**************************************************************
       Write multiple bytes to device register.
@@ -121,6 +122,7 @@ void LCD::ReadSeriesFromReg(enum LCD_RegAddress regAddr, uint8_t *buf, int8_t le
 void LCD::WriteSeriesToReg(enum LCD_RegAddress regAddr, const uint8_t *buf, uint8_t length)
 {
 #ifndef NOLCD
+#ifndef I2CLIB
   uint8_t i;
   I2C_BUS_BeginTransmission(LCD_ADDRESS);
   I2C_BUS_WriteByte(regAddr);
@@ -129,6 +131,9 @@ void LCD::WriteSeriesToReg(enum LCD_RegAddress regAddr, const uint8_t *buf, uint
     I2C_BUS_WriteByte(buf[i]);
   }
   I2C_BUS_EndTransmission();    // stop transmitting
+#else
+  I2c.write(LCD_ADDRESS,regAddr,buf,length);
+#endif
 #endif
 }
 
@@ -169,43 +174,6 @@ void LCD::WriteRAMGotoXY(uint8_t x, uint8_t y)
 #endif
 }
 
-
-
-/*void LCD::SendBitmapData(const uint8_t *buf, uint8_t length)
-  {
-    uint8_t i;
-    I2C_BUS_BeginTransmission(LCD_ADDRESS); // transmit device adress
-    I2C_BUS_WriteByte(DisRAMAddr);        //  transmit register adress to the device
-    for(i=0; i<length; i++)
-    {
-        I2C_BUS_WriteByte(pgm_read_byte_near(buf++));
-    }
-    I2C_BUS_EndTransmission();    // stop transmitting
-  }*/
-
-void LCD::SendBitmapData(const uint8_t *buf, uint8_t length)
-{
-#ifndef NOLCD
-  uint8_t i;
-  uint16_t circleTimes, circleCounter, transBytesNum;
-
-  circleTimes = length / LCD_TRANS_ONCE_BYTE_MAX + 1;
-
-  for (circleCounter = 0; circleCounter < circleTimes; circleCounter ++)
-  {
-    if (circleCounter + 1 >= circleTimes)
-      transBytesNum = length % LCD_TRANS_ONCE_BYTE_MAX;
-    else
-      transBytesNum = LCD_TRANS_ONCE_BYTE_MAX;
-
-    I2C_BUS_BeginTransmission(LCD_ADDRESS); // transmit device adress
-    I2C_BUS_WriteByte(DisRAMAddr);        //  transmit register adress to the device
-    for (i = 0; i < transBytesNum; i ++)
-      I2C_BUS_WriteByte(pgm_read_byte_near(buf++));
-    I2C_BUS_EndTransmission();    // stop transmitting
-  }
-#endif
-}
 
 
 void LCD::FontModeConf(enum LCD_FontSort font, enum LCD_FontMode mode, enum LCD_CharMode cMode)
@@ -355,90 +323,15 @@ void LCD::DrawCircleAt(int8_t x, int8_t y, uint8_t r, enum LCD_DrawMode mode)
 #endif
 }
 
-void LCD::DrawScreenAreaAt(GUI_Bitmap_t *bitmap, uint8_t x, uint8_t y)
-{
-#ifndef NOLCD
-  uint8_t regBuf[4];
-  int16_t byteMax;
-  int8_t i, counter;
-  const uint8_t *buf = bitmap->pData;
-  if (y < 64 && x < 128)
-  {
-    regBuf[0] = x;
-    regBuf[1] = y;
-    regBuf[2] = bitmap->XSize;
-    regBuf[3] = bitmap->YSize;
-    WriteSeriesToReg(DrawBitmapXPosRegAddr, regBuf, 4);
-    byteMax = regBuf[3] * bitmap->BytesPerLine;
-    counter = byteMax / 31;
-    if (counter)
-      for (i = 0; i < counter; i++, buf += 31)
-        SendBitmapData(buf, 31);
-    counter = byteMax % 31;
-    if (counter)
-      SendBitmapData(buf, counter);
-  }
-#endif
-}
-
-
-void LCD::DrawFullScreen(const uint8_t *buf)
-{
-#ifndef NOLCD
-  uint8_t i;
-  WriteRAMGotoXY(0, 0);
-  for (i = 0; i < 1024; i++)
-    WriteByteToReg(DisRAMAddr, buf[i]);
-#endif
-}
 
 #endif
 #endif
-
-
-
-uint8_t LCD::ReadByteDispRAM(uint8_t x, uint8_t y)
-{
-#ifndef NOLCD
-  ReadRAMGotoXY(x, y);
-  return ReadByteFromReg(DisRAMAddr);
-#else
-  return 0;
-#endif
-}
-
-
-
-void LCD::ReadSeriesDispRAM(uint8_t *buf, int8_t length, uint8_t x, uint8_t y)
-{
-#ifndef NOLCD
-  ReadRAMGotoXY(x, y);
-  ReadSeriesFromReg(DisRAMAddr, buf, length);
-#endif
-}
-
-void LCD::WriteByteDispRAM(uint8_t buf, uint8_t x, uint8_t y)
-{
-#ifndef NOLCD
-  WriteRAMGotoXY(x, y);
-  WriteByteToReg(DisRAMAddr, buf);
-#endif
-}
-
-
-
-void LCD::WriteSeriesDispRAM(uint8_t *buf, int8_t length, uint8_t x, uint8_t y)
-{
-#ifndef NOLCD
-  WriteRAMGotoXY(x, y);
-  WriteSeriesToReg(DisRAMAddr, buf, length);
-#endif
-}
 
 
 void LCD::DisplayConf(enum LCD_DisplayMode mode)
 {
 #ifndef NOLCD
+  DisplayConfigRegVal = mode;
   WriteByteToReg(DisplayConfigRegAddr, mode);
 #endif
 }
@@ -478,18 +371,19 @@ void LCD::DeviceAddrEdit(uint8_t newAddr)
 #endif
 }
 
-
-
 void LCD::CleanAll(enum LCD_ColorSort color)
 {
 #ifndef NOLCD
   uint8_t buf;
-  buf = ReadByteFromReg(DisplayConfigRegAddr);
+
+
+  buf = DisplayConfigRegVal ;
   if (color == WHITE)
-    WriteByteToReg(DisplayConfigRegAddr, (buf | 0x40) & 0xdf);
-  else
     WriteByteToReg(DisplayConfigRegAddr, buf | 0x60);
-#endif
+  else 
+    WriteByteToReg(DisplayConfigRegAddr, (buf | 0x40) & 0xdf);
+
+#endif //NO LCD
 }
 
 

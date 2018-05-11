@@ -27,10 +27,11 @@
 */
 void Relay::configure()
 {
+#ifdef ACTUATOR_TYPE_RELAY
   myrelay = 0x00;
   myrelayMode = 0x00;
   prev = 0x00;
-
+#ifndef I2CLIB
   Wire.beginTransmission(relay_addr);
   Wire.write(0x03);// cfg register
   Wire.write(0xF0); // our cfg
@@ -40,6 +41,24 @@ void Relay::configure()
   Wire.write(0x01);// output register
   Wire.write(0xF0);
   Wire.endTransmission();
+ #else 
+  relay_addr = RELAY1_ADDR;
+  if(I2c.write(relay_addr,0x03,0xF0) > 0)
+  {
+   relay_addr = RELAY1x2_ADDR;
+   if(I2c.write(relay_addr,0x03,0xF0) == 0)
+   {
+      x2on = true;
+      on = true;
+   }
+  } 
+  else
+  {
+      on = true;
+  }
+  I2c.write(relay_addr,0x01,0xF0);
+ #endif
+ #endif
 }
 
 /**
@@ -51,11 +70,14 @@ void Relay::configure()
 */
 void Relay::init(LCD * p_LCD)
 {
+  
+#ifdef ACTUATOR_TYPE_RELAY
   p_myLCD = p_LCD;
   relay_addr = RELAY1_ADDR;
   x2on = false;
   on = false;
 
+#ifndef I2CLIB
   Wire.beginTransmission(relay_addr);
   if (Wire.endTransmission() == 0) {
     configure();
@@ -71,6 +93,10 @@ void Relay::init(LCD * p_LCD)
       on = true;
     }
   }
+ #else
+  configure();
+ #endif
+ #endif
 }
 
 void Relay::setupState(uint8_t state, uint8_t swtch) {
@@ -87,6 +113,10 @@ void Relay::setupState(uint8_t state, uint8_t swtch) {
    \return n/a
 */
 void Relay::setState(uint8_t state, uint8_t swtch) {
+  
+#ifdef ACTUATOR_TYPE_RELAY
+
+#ifdef USE_MENU
   if (x2on) // case of UP/down on 2 relay linked, for ex windows opener
   {
     {
@@ -107,11 +137,30 @@ void Relay::setState(uint8_t state, uint8_t swtch) {
         setupState(0,2 );
       }
       LedState();
-      delay(100);
+      delay(200);
     }
   }
+#endif  
+#ifdef USE_DASHBOARD_VIEW
+// in this special case relay box has mixed usage  : 2 first btns are linked while 2 last are independantif (swtch == 0 )
+      if (swtch == 0 )
+      {
+        setupState(0,1 );
+        popup(1);
+      }
+      if (swtch == 1 )
+      {
+        setupState(0,0 );
+        popup(0);
+      }
+      LedState();
+      delay(200);
+#endif
   setupState(state,swtch );
   LedState();
+  delay(100);
+  popup(swtch);
+#endif
 }
 
 /**
@@ -122,8 +171,8 @@ void Relay::setState(uint8_t state, uint8_t swtch) {
    \return n/a
 */
 void Relay::setMode(uint8_t mode, uint8_t swtch) {
-  myrelayMode = (myrelayMode & ~(1 << swtch)) ;
-  myrelayMode |= ( (mode << swtch));
+  myrelayMode = (myrelayMode & ~(1 << (swtch-1))) ;
+  myrelayMode |= ( (mode << (swtch-1)));
 }
 
 /**
@@ -135,10 +184,23 @@ void Relay::setMode(uint8_t mode, uint8_t swtch) {
 */
 void Relay::LedState()
 {
+
+#ifdef ACTUATOR_TYPE_RELAY  
+#ifndef I2CLIB
   Wire.beginTransmission(relay_addr);
   Wire.write(0x01);// output register
   Wire.write(myrelay); // all on
   Wire.endTransmission();
+  delay(400);
+ #else
+  if(I2c.write(relay_addr,0x01,myrelay) > 0)
+  {
+    Serial.print("Timeout I2C Write :");
+    Serial.println(relay_addr);
+  }
+  delay(250);
+ #endif
+#endif
 }
 
 /**
@@ -150,15 +212,27 @@ void Relay::LedState()
 */
 void Relay::updateState()
 {
+
+#ifdef ACTUATOR_TYPE_RELAY
   uint8_t raw;
   uint8_t i = 4;
 
+#ifndef I2CLIB
   Wire.beginTransmission(relay_addr);
   Wire.write(0x00);// output register
   Wire.endTransmission();
   Wire.requestFrom(relay_addr, (uint8_t)1);
 
   raw = Wire.read();
+  
+ #else
+   
+  if(I2c.read(relay_addr,0x00,1,&raw) > 0)
+  {
+    Serial.print("Timeout I2C Read :");
+    Serial.println(relay_addr);
+  }
+ #endif
 
   //we only read the input of the buttons
   raw = raw & 0xF0;
@@ -177,13 +251,12 @@ void Relay::updateState()
         // local button pressed force manual mode. automatic mode can only be reactivated from network side
         setMode(RELAY_MODE_MANUAL, i - 3);
         setState((!((myrelay >> i - 4) & 1)), i - 4);
-        delay(500);
-        popup(i-3);
       }
       i++;
     }
 
   }
+#endif
 }
 
 /**
@@ -195,6 +268,8 @@ void Relay::updateState()
 */
 void Relay::popup(uint8_t num) {
 
+#ifdef ACTUATOR_TYPE_RELAY
+#ifdef USE_MENU
   p_myLCD->CleanAll(BLACK);
   p_myLCD->FontModeConf(Font_6x8, FM_ANL_AAA, WHITE_BAC);
 
@@ -209,16 +284,43 @@ void Relay::popup(uint8_t num) {
   p_myLCD->println(" Mode");
   p_myLCD->CharGotoXY(5 * CHAR_OFFSET, 2 * ROW_OFFSET);
   p_myLCD->print("RELAY ");
-  p_myLCD->print(num);
+  p_myLCD->print(num+1);
   p_myLCD->print(": ");
 
-  if ((myrelay >> (num - 1)) & 1) {
-    p_myLCD->print("On ");
+  if ((myrelay >> num ) & 1) {
+    p_myLCD->print("On");
   } else {
     p_myLCD->print("Off");
   }
   popupAtMillis = millis();
+#endif /*USE_MENU*/
 
+#ifdef USE_DASHBOARD_VIEW
+  
+  p_myLCD->CharGotoXY((num) * CHAR_OFFSET *2, 5 * ROW_OFFSET);
+  uint8_t symbol = 32; //space
+  
+    if ((myrelay >> num ) & 1) {
+      if(num == 0) 
+      {
+        symbol = ArrowUp;
+      } 
+      else if(num == 1) 
+      {
+        symbol = ArrowDown;
+      }
+      else if(num == 2) 
+      {
+        symbol = 76;
+      } 
+      else if(num == 3) 
+      {
+        symbol = 67;
+      }
+    }
+    p_myLCD->write(symbol);
+#endif /*USE_DASHBOARD_VIEW*/
+#endif /*ACTUATOR_TYPE_RELAY*/
 }
 
 /**
@@ -233,7 +335,12 @@ void Relay::popup(uint8_t num) {
 ***************************************************************/
 int Relay::getState(uint8_t num)
 {
+  
+#ifdef ACTUATOR_TYPE_RELAY
   return !((myrelay >> num) & 1);
+#else
+  return 0;
+#endif
 }
 
 /**************************************************************
@@ -241,6 +348,11 @@ int Relay::getState(uint8_t num)
 ***************************************************************/
 int Relay::getMode(uint8_t num)
 {
+  
+#ifdef ACTUATOR_TYPE_RELAY
   return ((myrelayMode >> num) & 1);
+#else
+  return 0;
+#endif
 }
 

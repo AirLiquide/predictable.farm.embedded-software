@@ -23,11 +23,9 @@
 //#define SC16IS750_DEBUG_PRINT
 #include "SC16IS750.h"
 
-
-#ifdef __AVR__
+#ifdef SENSOR_TYPE_CO2_SENSOR
+#ifndef I2CLIB
 #define WIRE Wire
-#else // Arduino Due
-#define WIRE Wire1
 #endif
 
 
@@ -40,7 +38,11 @@ SC16IS750::SC16IS750(uint8_t prtcl, uint8_t addr_sspin)
 
 void SC16IS750::begin(uint32_t baud)
 {
+#ifndef I2CLIB
   WIRE.begin();
+#else
+ // I2c.begin();
+#endif
   ResetDevice();
   FIFOEnable(1);
   SetBaudrate(baud);
@@ -86,21 +88,32 @@ uint8_t SC16IS750::digitalRead(uint8_t pin)
 uint8_t SC16IS750::ReadRegister(uint8_t reg_addr)
 {
   uint8_t result;
+#ifndef I2CLIB
   WIRE.beginTransmission(device_address_sspin);
   WIRE.write((reg_addr << 3));
   WIRE.endTransmission(0);
   WIRE.requestFrom(device_address_sspin, (uint8_t)1);
   result = WIRE.read();
+#else
+ uint8_t ret = 0;
+ ret = I2c.read(device_address_sspin, (reg_addr << 3),1, &result);
+ if(ret) return 0;
+#endif
   return result;
-
 }
 
 void SC16IS750::WriteRegister(uint8_t reg_addr, uint8_t val)
 {
+  
+#ifndef I2CLIB
   WIRE.beginTransmission(device_address_sspin);
   WIRE.write((reg_addr << 3));
   WIRE.write(val);
   WIRE.endTransmission(1);
+  #else
+  uint8_t result;
+  result = I2c.write(device_address_sspin,(reg_addr << 3),val);
+#endif
   return ;
 }
 
@@ -458,3 +471,5 @@ int SC16IS750:: peek()
   return peek_buf;
 
 }
+
+#endif /*SENSOR_TYPE_CO2_SENSOR*/
