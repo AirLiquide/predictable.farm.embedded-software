@@ -69,6 +69,7 @@ void Menu::init(LCD * p_LCD, Sensors* p_Sensors, Relay * p_relay) {
   p_mySensors = p_Sensors;
   p_myrelay = p_relay;
   currentMenu = n_menu_main;
+  myButton = Button();
 
   if (p_mySensors->on == false) {
 
@@ -161,32 +162,9 @@ uint8_t Menu::printMenu(uint8_t menu)
 */
 uint8_t Menu::Check(uint8_t menu)
 {
-  //Get the value from the button
-  unsigned short val = analogRead(A5);
-  val += analogRead(A5);
-  val += analogRead(A5);
-  val = val/3;
-  //val = val & 0xFFC0;
-
-  //Serial.println(val);
-
-  if (val > BTN_ENTER) val = ENTER;
-  else if (val > BTN_DOWN) val = DOWN;
-  else if (val > BTN_UP) val = UP;
-  else if (val > BTN_BACK) val = BACK;
-
-  //if the ENTER button is already pressed
-  if (val == ENTER || val == UP || val == DOWN || val == BACK)
-  {
-
-    if (val == prev && val == ENTER)
-      val = 0;
-    else
-      prev = val;
-  } else {
-    val = 0;
-    prev = val;
-  }
+  unsigned char val = 0;
+  
+  val = myButton.get();
 
   if (val > 0) {
 

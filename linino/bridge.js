@@ -65,6 +65,10 @@ const MODE_LOCAL  = 0;
 const MODE_REMOTE = 1;
 
 const SENSOR_TYPES = [
+    "btn1",
+    "btn2",
+    "btn3",
+    "btn4",
     "relay1",
     "relay2",
     "relay3",
