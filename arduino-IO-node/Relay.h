@@ -33,6 +33,7 @@
 #include "I2C.h"
 #endif
 #include "LCD.h"
+#include "YunBridge.h"
 
 #define RELAY1_ADDR 0X20 //V2
 #define RELAY1x2_ADDR 0X24 //V2
@@ -56,7 +57,7 @@ class Relay
     void setMode(uint8_t mode, uint8_t swtch);
     int getMode(uint8_t num);
     void LedState();
-    void init(LCD * p_LCD);
+    void init(LCD * p_LCD, YunBridge *p_bridge);
     bool on;
     bool x2on;
     uint8_t myrelay; // state
@@ -65,6 +66,7 @@ class Relay
     unsigned long popupAtMillis;
   private:
     LCD * p_myLCD;
+    YunBridge *p_myBridge;
     uint8_t prev;
     uint8_t relay_addr;
     void configure();

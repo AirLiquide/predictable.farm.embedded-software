@@ -101,7 +101,7 @@ void setup()
 
   //myLCD.Init();
 
-  relay.init(&myLCD);
+  relay.init(&myLCD, &bridge);
   mySensors.init(&myLCD, &bridge);
 
 #ifdef LCD_DISPLAY
@@ -125,6 +125,7 @@ void setup()
   //myLCD.DrawVLineAt(0, ROW_OFFSET -2, (CHAR_OFFSET*15)-2, WHITE);
   //delimiter for status bits
   myLCD.DrawHLineAt(0, LCD_X_SIZE_MAX - 1, (5 * ROW_OFFSET) - 3, WHITE);
+  for (int i =1; i<7; i++)  myLCD.DrawVLineAt((5 * ROW_OFFSET) - 3, LCD_Y_SIZE_MAX - 1, (i * 2* CHAR_OFFSET) - 4, WHITE);
   // delimiter for device ID bottom right corner
   myLCD.DrawVLineAt((5 * ROW_OFFSET) - 3, LCD_Y_SIZE_MAX - 1, (15 * CHAR_OFFSET) - 2, WHITE);
   //inside symbol
@@ -134,7 +135,7 @@ void setup()
   //outside symbol
   myLCD.DrawCircleAt(5, 3 * ROW_OFFSET + 3 , 2, WHITE_FILL);
   //notification area
-  myLCD.DrawHLineAt(0, LCD_X_SIZE_MAX - 1, (4 * ROW_OFFSET) - 3, WHITE);
+  myLCD.DrawHLineAt(0, LCD_X_SIZE_MAX - 1, (2 * ROW_OFFSET) - 3, WHITE);
 
 
   /*   myLCD.DispStringAt("12:23",CHAR_OFFSET*15,0);
@@ -147,6 +148,16 @@ void setup()
   Serial.println("ready");
 #endif
 
+}
+
+void send_relay_state()
+{
+  if (relay.on) {
+   bridge.sendInteger("relay1", relay.getState(0) | (relay.getMode(0) << 1));
+   bridge.sendInteger("relay2", relay.getState(1) | (relay.getMode(1) << 1));
+   bridge.sendInteger("relay3", relay.getState(2) | (relay.getMode(2) << 1));
+   bridge.sendInteger("relay4", relay.getState(3) | (relay.getMode(3) << 1));
+  }
 }
 
 uint8_t updateCounter = CALL_WATER_SENSOR;
@@ -164,6 +175,9 @@ void loop()
 #endif
 
 #ifdef USE_DASHBOARD_VIEW
+
+  uint8_t symbol = 32; //space
+            
   // get btn state if any
   char btnId[4];
   btnId[0] = 'b';
@@ -211,8 +225,6 @@ void loop()
     mySensors.update(false, true, 0);
 
 
-
-
 #ifdef LCD_DISPLAY
     // update screen content
     myLCD.DispStringAt("               ", CHAR_OFFSET * 3, 2 * ROW_OFFSET);
@@ -220,6 +232,7 @@ void loop()
 #if 1
     float temp = 19.43;
     if (temp > -10) myLCD.CharGotoXY(CHAR_OFFSET * 4, 2 * ROW_OFFSET);
+    else myLCD.CharGotoXY(CHAR_OFFSET * 3, 2 * ROW_OFFSET);
     myLCD.print(temp, 0);
     myLCD.DrawCircleAt((CHAR_OFFSET * 6) + 2, 2 * ROW_OFFSET, 1, WHITE_NO_FILL); //degree symbol
     myLCD.DispStringAt("C ", CHAR_OFFSET * 7, 2 * ROW_OFFSET);
@@ -301,6 +314,7 @@ void loop()
 
 #ifdef USE_DASHBOARD_VIEW
         case BRIDGE_SYSTEM_TIME:
+          myLCD.DispStringAt("                     ", 0, 0);
           myLCD.DispStringAt(buf, 0, 0);
 
           Serial.print("time:");
@@ -310,37 +324,62 @@ void loop()
              myLCD.DispStringAt(buf,0,0);
              break;*/
         case BRIDGE_SYSTEM_NOTIF:
-          myLCD.DispStringAt(buf, 0, 5 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_SCENARIO:
-          if (bridgeCommandValue) myLCD.DispCharAt("S", 9 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 9 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_WINDOW:
-          if (bridgeCommandValue) myLCD.DispCharAt("F", 1 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 9 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_UP:
-          if (bridgeCommandValue) myLCD.DispCharAt("+", 0, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 0, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_DOWN:
-          if (bridgeCommandValue) myLCD.DispCharAt("-", 2 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 2 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_LIGHT:
-          if (bridgeCommandValue) myLCD.DispCharAt("L", 5 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 5 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_STATE_CLIMATE:
-          if (bridgeCommandValue) myLCD.DispCharAt("C", 7 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 7 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          break;
-        case BRIDGE_SYSTEM_REMOTE_INFO1:
+          myLCD.DispStringAt("                     ", 0, 1 * ROW_OFFSET);
           myLCD.DispStringAt(buf, 0, 1 * ROW_OFFSET);
           break;
-        case BRIDGE_SYSTEM_REMOTE_INFO2:
+        case BRIDGE_STATE_SCENARIO:
+            myLCD.CharGotoXY(13 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = 83;
+            }
+          break;
+        case BRIDGE_STATE_WINDOW:
+            myLCD.CharGotoXY(10 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = 70;
+            }
+          break;
+        case BRIDGE_STATE_UP:
+            myLCD.CharGotoXY(0 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = ArrowUp;
+            }
+            myLCD.write(symbol);
+          break;
+        case BRIDGE_STATE_DOWN:
+            myLCD.CharGotoXY(2 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = ArrowDown;
+            }
+            myLCD.write(symbol);
+          break;
+        case BRIDGE_STATE_LIGHT:
+            myLCD.CharGotoXY(4 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = 76;
+            }
+            myLCD.write(symbol);
+          break;
+        case BRIDGE_STATE_CLIMATE:
+            myLCD.CharGotoXY(6 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue) 
+            {
+              symbol = 67;
+            }
+            myLCD.write(symbol);
+            break;
+        case BRIDGE_SYSTEM_REMOTE_INFO:
+          myLCD.DispStringAt("                     ", 0, 4 * ROW_OFFSET);
           myLCD.DispStringAt(buf, 0, 4 * ROW_OFFSET);
+          break;
+        case BRIDGE_WEATHER_FORECAST:
+          myLCD.DispStringAt("                     ", 0, 3 * ROW_OFFSET);
+          myLCD.DispStringAt(buf, 0, 3 * ROW_OFFSET);
           break;
 #endif  /*USE_DASHBOARD_VIEW*/
         case BRIDGE_SYSTEM_CONFIG:
@@ -364,8 +403,13 @@ void loop()
             myMenu.mainMenu();
 #endif
 #ifdef USE_DASHBOARD_VIEW
-          if (bridge.socketReady) myLCD.DispCharAt("#", 11 * CHAR_OFFSET, 6 * ROW_OFFSET);
-          else myLCD.DispCharAt(" ", 11 * CHAR_OFFSET, 6 * ROW_OFFSET);
+            myLCD.CharGotoXY(8 * CHAR_OFFSET , 5 * ROW_OFFSET);
+            if (bridgeCommandValue > BRIDGE_NETWORK_UP) 
+            {
+              if(bridgeCommandValue == BRIDGE_NETWORK_SOCKET) symbol = 64;
+              else symbol = 35;
+            }
+            myLCD.write(symbol);
 #endif  /*USE_DASHBOARD_VIEW*/
 
           break;
@@ -378,15 +422,12 @@ void loop()
           break;
 
       }
+      memset(buf, 0, 21);
     }
 
     //send relay state to Linux
-    if (relay.on) {
-      bridge.sendInteger("relay1", relay.getState(0) | (relay.getMode(0) << 1));
-      bridge.sendInteger("relay2", relay.getState(1) | (relay.getMode(1) << 1));
-      bridge.sendInteger("relay3", relay.getState(2) | (relay.getMode(2) << 1));
-      bridge.sendInteger("relay4", relay.getState(3) | (relay.getMode(3) << 1));
-    }
+    send_relay_state();
+    
 
 
     updateCounter = NBRE_CYCLE;

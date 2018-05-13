@@ -39,12 +39,12 @@
 
 #define BRIDGE_START        '#'
 
+#define BRIDGE_WEATHER_FORECAST     'k'
 #define BRIDGE_STATE_LIGHT           'l'
 #define BRIDGE_STATE_CLIMATE          'm'
 #define BRIDGE_NETWORK     'n'
 #define BRIDGE_OS          'o'
-#define BRIDGE_SYSTEM_REMOTE_INFO1  'p'
-#define BRIDGE_SYSTEM_REMOTE_INFO2  'q'
+#define BRIDGE_SYSTEM_REMOTE_INFO   'p'
 #define BRIDGE_STATE_SCENARIO       'r'
 #define BRIDGE_STATUS_REQUEST       's'
 #define BRIDGE_SYSTEM_TIME          't'

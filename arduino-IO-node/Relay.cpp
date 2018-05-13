@@ -68,11 +68,12 @@ void Relay::configure()
    \param pointer to LCD.cpp
    \return n/a
 */
-void Relay::init(LCD * p_LCD)
+void Relay::init(LCD * p_LCD,YunBridge *p_bridge)
 {
   
 #ifdef ACTUATOR_TYPE_RELAY
   p_myLCD = p_LCD;
+  p_myBridge = p_bridge;
   relay_addr = RELAY1_ADDR;
   x2on = false;
   on = false;
@@ -103,6 +104,22 @@ void Relay::setupState(uint8_t state, uint8_t swtch) {
   if(state) state = 0x1;
   myrelay = (myrelay & ~(1 << swtch)) ;
   myrelay |= ( (state << swtch));
+  //send directly state to Linux side
+  switch(swtch)
+  {
+    case 0:
+    p_myBridge->sendInteger("relay1", state | (getMode(swtch) << 1));
+    break;
+    case 1:
+    p_myBridge->sendInteger("relay2", state | (getMode(swtch) << 1));
+    break;
+    case 2:
+    p_myBridge->sendInteger("relay3", state | (getMode(swtch) << 1));
+    break;
+    case 3:
+    p_myBridge->sendInteger("relay4", state | (getMode(swtch) << 1));
+    break;
+  }
 }
 
 /**

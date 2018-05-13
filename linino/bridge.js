@@ -2,7 +2,7 @@
 
 // /!\ We do not 'use strict' mode here since Node 0.10 does not enable const / let by default.
 
-const VERSION = 8;
+const VERSION = 9;
 
 var DEVICE_ID = 0;
 var SERVER_URL = "http://lafactory.predictable.zone";
@@ -48,12 +48,12 @@ const START = '#';
 
 const OS_TIME        = "t";
 const OS_STATE_WINDOW        =     'f';
-const OS_STATE_DOWN            =   'g';
-const OS_STATE_UP              =   'h';
-const OS_STATE_LIGHT           =    'l';
+const OS_STATE_DOWN             =   'g';
+const OS_STATE_UP               =   'h';
+const OS_WEATHER_FORECAST       ='k';
+const OS_STATE_LIGHT            =    'l';
 const OS_STATE_CLIMATE           =   'm';
-const OS_REMOTE_INFO1      ='p';
-const OS_REMOTE_INFO2      ='q';
+const OS_REMOTE_INFO            ='p';
 const OS_STATE_SCENARIO          = 'r';
 const OS_SYSTEM_NOTIF           =  'x';
 
@@ -93,6 +93,8 @@ const SENSOR_TYPES = [
 
 //const MutexPromise = require('mutex-promise');
 const fs = require("fs");
+const https = require("https");
+const http = require("http");
 const exec = require('child_process').exec;
 const serialport = require('/usr/lib/node_modules/serialport');
 const SerialPort = serialport.SerialPort;
@@ -153,6 +155,9 @@ var moisture_cpt = 0;
 var soil_temperature_cpt = 0;
 var water_level_cpt = 0;
 
+var latitude, longitude, city, country;
+var weather;
+
 const ENDL = '\n';
 
 datelog("Starting app v" + VERSION + "...");
@@ -180,12 +185,14 @@ function all_relay_off()
 
 datelog("Starting app ...");
 
+datelog('** Resetting MCU');
+reset_mcu();
+
 datelog(" 1. Opening serial port " + SERIAL_PORT);
 var arduino = new SerialPort(SERIAL_PORT, {
     baudrate: SERIAL_BAUDRATE,
     parser: serialport.parsers.readline("\r\n"),
 });
-
 datelog(" 2. Opening socket to " + SERVER_URL);
 var remote_socket = client(
         SERVER_URL,
@@ -200,6 +207,7 @@ var remote_socket = client(
     );
 
 datelog(" 3. Starting minute timer for network check and time update");
+getTime();
 var networkCheck = setInterval(function() {
     var test_file = 'http://update.predictablefarm.net/'+DEVICE_ID+'/bridge.js'
     var test_network_cmdline = '(/usr/bin/curl --head --silent '+test_file+' | head -n 1) | grep -q 200 && echo 1 || echo 0';
@@ -224,10 +232,7 @@ var networkCheck = setInterval(function() {
         }
 
     })
-    exec('date "+%a %b %d - %H:%M"', function(error, stdout, stderr) {
-        sendTime(stdout);
-        datelog("Updating time :"+stdout);
-    })
+    getTime();
 }, 60 * 1000);
 
 datelog(" 4. Starting reboot check");
@@ -241,6 +246,16 @@ var rebootCheck = setInterval(function() {
         sleep(90); // Wait for reboot now ...
     }
 }, 20 * 1000);
+
+
+
+datelog(" 5.  Weather service");
+getGeoloc();
+weather = setInterval(function () {
+    datelog("Weather update");
+    getWeather(latitude, longitude,city, country);
+}, 30 * 1000 * 60); // every 30 min
+
 
 /*
         UTILITY FUNCTIONS
@@ -294,12 +309,76 @@ function sendNetworkStatus()
     }
 }
 
+function sendWeatherInfo(info, condition) {
+    datelog('Sending OS_WEATHER_FORECAST command '+info + ' '+condition);
+    MCU_write( OS_WEATHER_FORECAST+info);
+    setTimeout(function() {
+            MCU_write( OS_REMOTE_INFO+ condition );
+    }, 2000);
+}
+
 function sendACK(data)
 {
     //datelog('Sending ACK ' + data);
     //MCU_write(ACK);
 }
 
+function getGeoloc() {
+    http.get("http://ip-api.com/json", function (res) {
+        var body = '';
+        res.on('data', function (chunk) {
+            body += chunk;
+        });
+        res.on('end', function () {
+            var data = JSON.parse(body);
+            latitude = data.lat;
+            longitude = data.lon;
+            city = data.city;
+            country = data.country;
+            datelog("Geoloc started. Located in " + city + ": lat" + latitude + "/ long :" + longitude);
+            getWeather(latitude, longitude, city, country);
+        });
+    }).on('error', function (e) {
+        datelog("Got an error: ", e);
+    });
+}
+
+function getWeather(lat, lon, city, country) {
+    if (country == "France") {
+
+        var temperature_ext, tmax_ext, tmin_ext, condition_ext;
+        https.get('https://www.prevision-meteo.ch/services/json/lat=' + lat+"lng="+lon, function (res) {
+            var body = '';
+            res.on('data', function (chunk) {
+                body += chunk;
+            });
+            res.on('end', function () {
+                var data = JSON.parse(body);
+                datelog(JSON.stringify(data, null, 4));
+                tmax_ext = data.fcst_day_0.tmax;
+                tmin_ext = data.fcst_day_0.tmin;
+                datelog("Weather info : Tmax : " + tmax_ext + ": Tmin : " + tmin_ext);
+                temperature_ext = data.current_condition.tmp;
+                condition_ext = data.fcst_day_0.condition;
+                datelog("Weather info : Temp : " + temperature_ext + ": summary : " + condition_ext);
+                var info = "Out: "+temperature_ext+ " C, max: "+tmax_ext;
+                sendWeatherInfo(info,condition_ext );
+                return true;
+            });
+        }).on('error', function (e) {
+            datelog("Got an error: ", e);
+            return false;
+        });
+    }
+    return false;
+}
+function getTime()
+{
+    exec('date "+%a %b %d - %H:%M"', function(error, stdout, stderr) {
+        sendTime(stdout);
+        datelog("Updating time :"+stdout);
+    });
+}
 function exitProcess()
 {
     datelog('** Exit process now');
@@ -317,48 +396,6 @@ function reboot()
     exec('/sbin/reboot', function() {
         //no op
     })
-}
-
-function launchUpdate()
-{
-    datelog("Launch update");
-
-    // Update bridge file
-    datelog("Replacing bridge");
-    exec('mkdir -p /root/backup', function() {
-        exec('mv /root/bridge.js /root/backup/bridge.backup.' + (Date.now()) + '.js', function() {
-            exec('mv /root/update/bridge.js /root/bridge.js', function() {
-                // Update INO file
-                datelog("Merging sketch with bootloader");
-                exec('merge-sketch-with-bootloader.lua /root/update/update.ino.hex', function() {
-                    datelog("Flashing sketch");
-                    exec('run-avrdude /root/update/update.ino.hex', function(){
-                        reset_mcu();
-                        setTimeout(function(){
-                            // We give 30 secs before it can be updated again, just to avoid race conditions if
-                            // socket messages are received twice.
-                            updateLock = false;
-                        }, 30 * 1000);
-                        reboot();
-                    })
-                })
-            })
-        })
-    })
-}
-
-function retrieveUpdateFiles()
-{
-    datelog("Retrieve update files");
-    exec('rm -fr /root/update && mkdir -p /root/update', function () {
-        exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "update.ino.hex", function() {
-            exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "bridge.js", function() {
-                exec('cd /root/update && wget ' + UPDATE_ENDPOINT + "/" + DEVICE_ID + "/" + "bridge.service", function() {
-                    launchUpdate();
-                });
-            });
-        });
-    });
 }
 
 function processIncomingCommand(data, mode)
@@ -487,9 +524,6 @@ function processIncomingCommand(data, mode)
 */
 
 remote_socket.on('connect', function() {
-    datelog('** Resetting MCU');
-    reset_mcu();
-
     datelog('** Connected to server: ' + SERVER_URL);
 
     remote_socket.emit('hello');
