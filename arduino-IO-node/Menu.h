@@ -27,19 +27,7 @@
 
 #include "Sensors.h"
 #include "YunBridge.h"
-/*=========================================================================
-    VALUE OF THE BUTTON
-    -----------------------------------------------------------------------*/
-#define BTN_UP            (840)
-#define BTN_DOWN          (900)
-#define BTN_BACK          (700)
-#define BTN_ENTER         (980)
-
-#define UP            (1)
-#define DOWN          (2)
-#define BACK          (3)
-#define ENTER         (4)
-//
+#include "Button.h"
 
 #define MAX_POPUP_MILLIS 800
 
@@ -67,12 +55,12 @@ class Menu
     uint8_t currentMenu;
     LCD * p_myLCD;
   private:
+    Button myButton;
     Sensors * p_mySensors;
     Relay *p_myrelay;
 
     void relayInfo(uint8_t num);
     void reset_curs();
-    int prev;
     void Cursor(uint8_t maxi, uint8_t mini, uint8_t val);
     void Space();
 

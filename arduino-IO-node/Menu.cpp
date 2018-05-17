@@ -22,7 +22,7 @@ extern GUI_Bitmap_t bmClock;
 LCD my_LCD;
 uint8_t curs1 = 1;//position of the cursor
 uint8_t point = 0; //precision of the calibration
-uint8_t select = 0;
+uint8_t selected = 0;
 
 //#define ALLOW_I2C_DEVICE_SCAN_AFTER_POWERON
 
@@ -30,26 +30,7 @@ uint8_t select = 0;
 #define GUI_STORAGE_PTR PROGMEM
 #endif
 
-const unsigned char GUI_STORAGE_PTR acClock[] = {
-  0xbc
-  , 0x9c
-  , 0x8c
-  , 0x84
-  , 0x8c
-  , 0x9c
-  , 0xbc
-  , 0xfc
 
-
-};
-
-GUI_Bitmap_t bmClock = {
-  6, /* XSize */
-  8, /* YSize */
-  1, /* bytesPerLine */
-  1, /* BitsPerPixel */
-  acClock,  /* Pointer to picture data (indices) */
-};
 
 typedef uint8_t _item;
 struct  {
@@ -88,6 +69,7 @@ void Menu::init(LCD * p_LCD, Sensors* p_Sensors, Relay * p_relay) {
   p_mySensors = p_Sensors;
   p_myrelay = p_relay;
   currentMenu = n_menu_main;
+  myButton = Button();
 
   if (p_mySensors->on == false) {
 
@@ -180,32 +162,9 @@ uint8_t Menu::printMenu(uint8_t menu)
 */
 uint8_t Menu::Check(uint8_t menu)
 {
-  //Get the value from the button
-  unsigned short val = analogRead(A5);
-  val += analogRead(A5);
-  val += analogRead(A5);
-  val = val/3;
-  //val = val & 0xFFC0;
-
-  //Serial.println(val);
-
-  if (val > BTN_ENTER) val = ENTER;
-  else if (val > BTN_DOWN) val = DOWN;
-  else if (val > BTN_UP) val = UP;
-  else if (val > BTN_BACK) val = BACK;
-
-  //if the ENTER button is already pressed
-  if (val == ENTER || val == UP || val == DOWN || val == BACK)
-  {
-
-    if (val == prev && val == ENTER)
-      val = 0;
-    else
-      prev = val;
-  } else {
-    val = 0;
-    prev = val;
-  }
+  unsigned char val = 0;
+  
+  val = myButton.get();
 
   if (val > 0) {
 
@@ -223,7 +182,7 @@ uint8_t Menu::Check(uint8_t menu)
           p_mySensors->scrolling++;
           //Serial.print("Down: ");
           //Serial.println(p_mySensors->scrolling);
-          p_mySensors->update(6);
+          p_mySensors->update(true,false,6);
           delay(150);
         }
       }
@@ -234,7 +193,7 @@ uint8_t Menu::Check(uint8_t menu)
           p_mySensors->scrolling--;
           //Serial.print("Up: ");
           //Serial.println(p_mySensors->scrolling);
-          p_mySensors->update(6);
+          p_mySensors->update(true,false,6);
           delay(150);
         }
       }
@@ -267,7 +226,7 @@ uint8_t Menu::Check(uint8_t menu)
           p_mySensors->scrolling = 0;
           p_myLCD->CleanAll(WHITE);
 
-          p_mySensors->update(6);
+          p_mySensors->update(true,false,6);
 
 
         } else if (curs1 == _menu_item._item_calibrate) {//calibration
@@ -301,19 +260,19 @@ uint8_t Menu::Check(uint8_t menu)
         if (curs1 == _item_ph) {//PH
           menu = n_menu_accuracy;
           point = 3;
-          select = 1;
+          selected = 1;
           reset_curs();
           accuracyMenu();
         } else if (curs1 == _item_do) {//DO
           menu = n_menu_accuracy;
           point = 2;
-          select = 2;
+          selected = 2;
           reset_curs();
           accuracyMenu();
         } else if (curs1 == _item_ec) {//EC
           menu = n_menu_accuracy;
           point = 2;
-          select = 3;
+          selected = 3;
           reset_curs();
           accuracyMenu();
         } else if (curs1 == _item_rtd) {//RTD
@@ -361,11 +320,11 @@ uint8_t Menu::Check(uint8_t menu)
       }
       else if (val == ENTER) { //if we click on enter
         if (curs1 == 1) {
-          p_mySensors->calibrate(select, 1);
+          p_mySensors->calibrate(selected, 1);
         } else if (curs1 == 2) {
-          p_mySensors->calibrate(select, 2);
+          p_mySensors->calibrate(selected, 2);
         } else if (curs1 == 3) {
-          p_mySensors->calibrate(select, 3);
+          p_mySensors->calibrate(selected, 3);
         } else if (curs1 == 4) {//EXIT
           curs1 = 1;
         }
@@ -502,9 +461,7 @@ void Menu::Cursor(uint8_t maxi, uint8_t mini, uint8_t val)
   }
 
   //print the cursor
-  p_myLCD->WorkingModeConf(OFF, ON, WM_BitmapMode);
-  p_myLCD->DrawScreenAreaAt(&bmClock, 4 * CHAR_OFFSET, ( i) * ROW_OFFSET);
-  p_myLCD->WorkingModeConf(OFF, ON, WM_CharMode);
+  p_myLCD->DispStringAt(">", 4 * CHAR_OFFSET, ( i) * ROW_OFFSET);
 
 }
 
@@ -630,7 +587,7 @@ void Menu::accuracyMenu() {
 void Menu::sensorsValues() {
   currentMenu = n_menu_sensors_values;
   //p_myLCD->CleanAll(WHITE);
-  p_mySensors->update(6);
+  p_mySensors->update(true, false, 6);
 }
 
 /**
@@ -644,9 +601,7 @@ void Menu::relaysState() {
   currentMenu = n_menu_relays_state;
 
   //prints cursor
-  p_myLCD->WorkingModeConf(OFF, ON, WM_BitmapMode);
-  p_myLCD->DrawScreenAreaAt(&bmClock, 4 * CHAR_OFFSET, ( 5) * ROW_OFFSET);
-  p_myLCD->WorkingModeConf(OFF, ON, WM_CharMode);
+  p_myLCD->DispStringAt(">", 4 * CHAR_OFFSET, ( 5) * ROW_OFFSET);
 
   p_myLCD->DispStringAt("Relay", 0, 0 * ROW_OFFSET);
 

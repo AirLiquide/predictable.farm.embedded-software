@@ -29,7 +29,8 @@
 */
 
 #include "SunLight.h"
-#include "Wire.h"
+#include "I2C.h"
+//#include "Wire.h"
 #ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
 /*--------------------------------------------------------//
   default init

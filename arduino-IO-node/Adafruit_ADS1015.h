@@ -27,7 +27,14 @@
 #include "WProgram.h"
 #endif
 
+
+#include "SensorTypes.h"
+
+#ifndef I2CLIB
 #include <Wire.h>
+#else
+#include "I2C.h"
+#endif
 
 /*=========================================================================
     I2C ADDRESS/BITS

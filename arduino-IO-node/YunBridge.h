@@ -31,14 +31,29 @@
 #define BRIDGE_RELAY_2 'b'
 #define BRIDGE_RELAY_3 'c'
 #define BRIDGE_RELAY_4 'd'
+
+#define BRIDGE_STATE_WINDOW         'f'
+#define BRIDGE_STATE_DOWN           'g'
+#define BRIDGE_STATE_UP             'h'
+#define BRIDGE_DEVICE      'i'
+
+#define BRIDGE_START        '#'
+
+#define BRIDGE_WEATHER_FORECAST     'k'
+#define BRIDGE_STATE_LIGHT           'l'
+#define BRIDGE_STATE_CLIMATE          'm'
+#define BRIDGE_NETWORK     'n'
+#define BRIDGE_OS          'o'
+#define BRIDGE_SYSTEM_REMOTE_INFO   'p'
+#define BRIDGE_STATE_SCENARIO       'r'
+#define BRIDGE_STATUS_REQUEST       's'
+#define BRIDGE_SYSTEM_TIME          't'
 #define BRIDGE_SYSTEM_CONFIG        'u'
 #define BRIDGE_SYSTEM_REBOOT        'v'
 #define BRIDGE_SYSTEM_UPDATE        'w'
+#define BRIDGE_SYSTEM_NOTIF         'x'
+#define BRIDGE_SYSTEM_DATE          'y'
 
-#define STATUS_REQUEST     's'
-#define BRIDGE_NETWORK     'n'
-#define BRIDGE_OS          'o'
-#define BRIDGE_DEVICE      'i'
 #define BRIDGE_ACK      "ACK"
 #define BRIDGE_OS_DOWN      0
 #define BRIDGE_OS_UP        1
@@ -59,7 +74,7 @@ class YunBridge
     void sendFloat(char * sensorName, float data);
     void sendInteger(char * sensorName, unsigned int data);
 
-    int getCommand(unsigned char * p_o_command, int * p_o_value);
+    int getCommand(unsigned char * p_o_command, int * p_o_value, unsigned char * p_o_buff);
 
   private:
 

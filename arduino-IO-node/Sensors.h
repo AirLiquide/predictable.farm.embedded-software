@@ -25,8 +25,14 @@
     #include "WProgram.h"
 #endif
 
+#include "config.h"
+
 #include <EEPROM.h>
+#ifdef I2CLIB
+#include "I2C.h"
+#else
 #include <Wire.h>
+#endif
 
 #include "SensorTypes.h"
 #ifdef SENSOR_TYPE_PRESSURE_SENSOR
@@ -74,7 +80,7 @@
 class Sensors
 {
   public:
-    void update(uint8_t menu);
+    void update(bool print, bool send,  uint8_t menu);
     void calibrate(uint8_t sensorID, int val );
     void init(LCD * p_LCD,  YunBridge * p_bridge);
     void waterCall();
@@ -88,16 +94,6 @@ class Sensors
     bool on;
     void wait();
 
-  private:
-
-    void reset();
-    void printinfo (char* sensorName, float sensorValue, uint8_t sensorPrecision, char * sensorUnit);
-    LCD * p_myLCD;
-
-    void printOk();
-
-    //uint8_t actuator_relay;
-    uint8_t sensor_item;
 
 
 #ifdef SENSOR_TYPE_PAR_SENSOR
@@ -122,6 +118,7 @@ class Sensors
 
 #ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
     uint8_t sensor_air_relative_humidity;
+    float air_humidity;
 #endif
 
 #ifdef SENSOR_TYPE_CO_SENSOR
@@ -170,24 +167,25 @@ class Sensors
     float water_level;
 #endif
 
-
-#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
-    //values humidity sensor
-    SHTSensor myHum;
-#endif
-    //Values for the ADC with temp, uv, wms, jyp1000
-    Adafruit_ADS1115 myAdc;
-
-#ifdef SENSOR_TYPE_PRESSURE_SENSOR
-    Barometer myBarometer;
-#endif
 #ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
     uint8_t sensor_light_lux;
     float light_lux;
     uint8_t sensor_light_uv;
     float light_uv;
-    SunLight mySunLightSensor;
 #endif
+
+
+  private:
+
+    void reset();
+    void printinfo (char* sensorName, float sensorValue, uint8_t sensorPrecision, char * sensorUnit);
+    LCD * p_myLCD;
+
+    void printOk();
+
+    //uint8_t actuator_relay;
+    uint8_t sensor_item;
+
 
 #ifdef SENSOR_TYPE_WATER_LEVEL_SENSOR
     Waterlevel myWaterlevel;
@@ -209,12 +207,26 @@ class Sensors
 #endif
 #ifdef SENSOR_TYPE_CO2_SENSOR
     CO2 myCO2;
+    SC16IS750 myi2cuart;
 #endif
 
-    SC16IS750 myi2cuart;
+#ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
+    SunLight mySunLightSensor;
+#endif
 
 #ifdef SENSOR_TYPE_CO_SENSOR
     MutichannelGasSensor myCO;
+#endif
+
+#ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
+    //values humidity sensor
+    SHTSensor myHum;
+#endif
+    //Values for the ADC with temp, uv, wms, jyp1000
+    Adafruit_ADS1115 myAdc;
+
+#ifdef SENSOR_TYPE_PRESSURE_SENSOR
+    Barometer myBarometer;
 #endif
 
 };

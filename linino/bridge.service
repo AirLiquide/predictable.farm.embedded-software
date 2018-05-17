@@ -10,93 +10,162 @@ EXTRA_HELP="        status  Returns the status of the service
         block   Forces the loop to stop, and stop the service
         unblock Reenables the loop mode, and start the service"
 
-ID=5
+CUSTOMER="lafactory"
+
+# http://chriscontinanza.com/2013/12/14/NodeJS-and-Yun.html
+# We differentiate between SHELL and BRIDGE so we can differentiate them in ps.
+NODE_OPTIONS_BRIDGE="--stack_size=1024 --max_old_space_size=20 --max_new_space_size=2048 --max_executable_size=5 --gc_global --gc_interval=100"
+NODE_OPTIONS_SHELL="--max_old_space_size=20 --max_new_space_size=2048 --max_executable_size=5 --stack_size=1024 --gc_global --gc_interval=100"
+
+ID="$(hostname | sed 's/[^0-9]*//g')"
+
 
 flash()
 {
-
-   	echo "updating arduino-IO-node.ino.hex"
+    echo "updating arduino-IO-node.ino.hex"
     touch /root/flash.lock
     /usr/bin/merge-sketch-with-bootloader.lua /root/arduino-IO-node.ino.hex
     /usr/bin/run-avrdude /root/arduino-IO-node.ino.hex
     /usr/bin/reset-mcu
     rm -f /root/flash.lock
-   	echo "updating arduino-IO-node.ino.hex done"
+    echo "updating arduino-IO-node.ino.hex done"
 }
 
 update()
 {
     echo "Try to Update ..."
-    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.js | head -n 1)
-    if echo "$status" | grep -q 200 
+    echo $ID
+
+    opkg update
+    opkg install nmap
+
+
+    crontab -r
+    (crontab -l 2>/dev/null; echo "* * * * * /root/updateHostnames.sh") | crontab -     
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/updateHostnames.sh | head -n 1)
+    if echo "$status" | grep -q 200
     then
-	    /usr/bin/curl -z /root/bridge.js http://update.predictablefarm.net/$ID/bridge.js -o /root/bridge-new.js
-	    if [ -e /root/bridge-new.js ]
-	    then
-    		echo "updating bridge.js"
-    		mv /root/bridge-new.js /root/bridge.js
-	    else
-    		echo "no update found for bridge.js"
-	    fi
+        /usr/bin/curl -z /root/updateHostnames.sh http://update.predictablefarm.net/$ID/updateHostnames.sh -o /root/updateHostnames-new.sh
+        if [ -e /root/updateHostnames-new.sh ]
+        then
+            echo "updating updateHostnames.sh"
+            mv /root/updateHostnames-new.sh /root/updateHostnames.sh
+            chmod +x /root/updateHostnames.sh
+        else
+            echo "no update found for updateHostnames.sh"
+        fi
+    else
+        echo "updateHostnames.sh not found on server"
     fi
 
-    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.service | head -n 1)
-    if echo "$status" | grep -q 200 
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/shell.js | head -n 1)
+    if echo "$status" | grep -q 200
     then
-	    /usr/bin/curl -z /root/bridge.service http://update.predictablefarm.net/$ID/bridge.service -o /root/bridge-new.service
-	    if [ -e /root/bridge-new.service ]
-	    then
-   		    echo "updating bridge.service"
-   		    cp /root/bridge-new.service /root/bridge.service
-   		    mv /root/bridge-new.service /etc/init.d/bridge
-            chmod +x /etc/init.d/bridge
-   		    echo "rebooting in 20sec"
-            sleep 20
-            /sbin/reboot
-	    else
-   		    echo "no update found for bridge.service"
-	    fi
+        /usr/bin/curl -z /root/shell.js http://update.predictablefarm.net/$ID/shell.js -o /root/shell-new.js
+        if [ -e /root/shell-new.js ]
+        then
+            echo "updating shell.js"
+            mv /root/shell-new.js /root/shell.js
+        else
+            echo "no update found for shell.js"
+        fi
+    else
+        echo "shell.js not found on server"
+    fi
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/id_rsa | head -n 1)
+    if echo "$status" | grep -q 200
+    then
+        /usr/bin/curl -z /root/id_rsa http://update.predictablefarm.net/$ID/id_rsa -o /root/id_rsa-new
+        if [ -e /root/id_rsa-new ]
+        then
+            echo "updating id_rsa"
+            mv /root/id_rsa-new /root/id_rsa
+        else
+            echo "no update found for id_rsa"
+        fi
+    else
+        echo "id_rsa not found on server"
+    fi
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.js | head -n 1)
+    if echo "$status" | grep -q 200
+    then
+        /usr/bin/curl -z /root/bridge.js http://update.predictablefarm.net/$ID/bridge.js -o /root/bridge-new.js
+        if [ -e /root/bridge-new.js ]
+        then
+            echo "updating bridge.js"
+            mv /root/bridge-new.js /root/bridge.js
+        else
+            echo "no update found for bridge.js"
+        fi
     fi
 
     status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex| head -n 1)
-    if echo "$status" | grep -q 200 
+    if echo "$status" | grep -q 200
     then
         if [ -e /root/arduino-IO-node.ino.hex ]
         then
-   		    echo "verify version before downloading arduino-IO-node.ino.hex"
+            echo "verify version before downloading arduino-IO-node.ino.hex"
             /usr/bin/curl -z /root/arduino-IO-node.ino.hex http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex -o /root/arduino-IO-node.ino-new.hex
         else
-   		    echo "force downloading arduino-IO-node.ino.hex"
-	        /usr/bin/curl http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex -o /root/arduino-IO-node.ino-new.hex
+            echo "force downloading arduino-IO-node.ino.hex"
+            /usr/bin/curl http://update.predictablefarm.net/$ID/arduino-IO-node.ino.hex -o /root/arduino-IO-node.ino-new.hex
         fi
         if [ -e /root/arduino-IO-node.ino-new.hex ]
-	    then
-   		    mv /root/arduino-IO-node.ino-new.hex /root/arduino-IO-node.ino.hex
+        then
+            mv /root/arduino-IO-node.ino-new.hex /root/arduino-IO-node.ino.hex
             flash
-	    else 
+        else
             if [ -e /root/flash.lock ]
             then
-    		    echo "try to continue reflash arduino-IO-node.ino.hex"
+                echo "try to continue reflash arduino-IO-node.ino.hex"
                 flash
             else
-    		    echo "no update found for arduino-IO-node.ino.hex"
-    	    fi
+                echo "no update found for arduino-IO-node.ino.hex"
+            fi
         fi
     else
         echo "server error : no update found for arduino-IO-node.ino.hex"
-    fi     
+    fi
+
+    status=$(/usr/bin/curl --head --silent http://update.predictablefarm.net/$ID/bridge.service | head -n 1)
+    if echo "$status" | grep -q 200
+    then
+        /usr/bin/curl -z /root/bridge.service http://update.predictablefarm.net/$ID/bridge.service -o /root/bridge-new.service
+        if [ -e /root/bridge-new.service ]
+        then
+            echo "updating bridge.service"
+            cp /root/bridge-new.service /root/bridge.service
+            mv /root/bridge-new.service /etc/init.d/bridge
+            chmod +x /etc/init.d/bridge
+            echo "rebooting in 20sec"
+            sleep 20
+            /sbin/reboot
+        else
+            echo "no update found for bridge.service"
+        fi
+    fi
+
+
 }
 
 boot()
 {
     export ID=$ID
+    export CUSTOMER=$CUSTOMER
 
+    echo "Trying to update firmware ..."
     update
 
+    echo "Starting remote shell ..."
+    /usr/bin/node $NODE_OPTIONS_SHELL /root/shell.js &
+    sleep 10
     echo "Starting Bridge (loop) ..."
     rm /root/once.lock
     while
-        /usr/bin/node /root/bridge.js > /root/bridge.log 2>&1
+        /usr/bin/node $NODE_OPTIONS_BRIDGE /root/bridge.js $ID $CUSTOMER > /root/bridge.log 2>&1
         sleep 20
         echo " -- Relaunching Bridge ..." > /root/bridge.log
         [ ! -f /root/once.lock ]
@@ -105,27 +174,28 @@ boot()
 
 start()
 {
-    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
-    if [ $PROCESSES -eq 2 ]; then
+    PROCESSES=`ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | wc -l`
+    if [ $PROCESSES -eq 1 ]; then
         echo "Bridge is already running, skip."
     else
         echo "Starting Bridge (once)..."
-        /usr/bin/node /root/bridge.js > /root/bridge.log 2>&1 &
+        /usr/bin/node $NODE_OPTIONS_BRIDGE /root/bridge.js $ID $CUSTOMER > /root/bridge.log 2>&1 &
     fi
 }
 
 block()
 {
     echo "Stopping Bridge ..."
-    killall node
+    PID="$(ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | awk '{ print $1 }')"
+    kill -9 $PID
     touch /root/once.lock
 }
 
 unblock()
 {
     rm /root/once.lock
-    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
-    if [ $PROCESSES -eq 2 ]; then
+    PROCESSES=`ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | wc -l`
+    if [ $PROCESSES -eq 1 ]; then
         echo "Bridge is already running, skip starting."
     else
         start
@@ -135,7 +205,8 @@ unblock()
 stop()
 {
     echo "Stopping Bridge ..."
-    killall node
+    PID="$(ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | awk '{ print $1 }')"
+    kill -9 $PID
     if [ ! -f /root/once.lock ]; then
         echo "It will restart in less than 20 seconds (loop mode)."
     fi
@@ -144,7 +215,8 @@ stop()
 restart()
 {
     echo "Restarting Bridge (it will automatically restart in 20 secs if in loop mode) ..."
-    killall node
+    PID="$(ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | awk '{ print $1 }')"
+    kill -9 $PID
     if [ -f /root/once.lock ]; then
         start
     fi
@@ -152,8 +224,8 @@ restart()
 
 status()
 {
-    PROCESSES=`ps | grep '/usr/bin/node /root/bridge.js' | wc -l`
-    if [ $PROCESSES -eq 2 ]; then
+    PROCESSES=`ps | grep '/usr/bin/node --stack_size=1024' | grep -v grep | wc -l`
+    if [ $PROCESSES -eq 1 ]; then
         if [ ! -f /root/once.lock ]; then
             echo "Bridge service is running in loop mode."
         else

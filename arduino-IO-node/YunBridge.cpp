@@ -29,7 +29,7 @@
 void YunBridge::init()
 {
   Serial1.begin(115200);
-  Serial1.println(STATUS_REQUEST);
+  Serial1.println(BRIDGE_STATUS_REQUEST);
 }
 
 
@@ -136,13 +136,14 @@ void YunBridge::sendFloat(char * sensorName, float data)
    \fn int YunBridge::getCommand(unsigned char * p_o_command, unsigned char * p_o_value)
    \brief gets commands and values from the linux
 
-   \param pointer to command and value
+   \param pointer to command and value, buffr (8 bytes after command if exist)
    \return nbread Int
 */
-int YunBridge::getCommand(unsigned char * p_o_command, int * p_o_value)
+int YunBridge::getCommand(unsigned char * p_o_command, int * p_o_value, unsigned char * p_o_buff)
 {
-  char incomingBytes[9]; // 1 + 8
+  char incomingBytes[23]; // 1+ 1 + 21 
   uint8_t nbRead = 0;
+  uint8_t chksum = 0;
 #ifdef DEBUG_YUN
   Serial.println(F("Looking for command..."));
 #endif
@@ -152,18 +153,30 @@ int YunBridge::getCommand(unsigned char * p_o_command, int * p_o_value)
     Serial.println(Serial1.available());
     Serial.println(F("data available"));
 #endif
-    nbRead = Serial1.readBytesUntil('\n', incomingBytes, 9);
+    nbRead = Serial1.readBytesUntil('\n', incomingBytes, 23);
     if (nbRead  > 1)
     {
-      *p_o_command = incomingBytes[0];
-      incomingBytes[nbRead] = '\0'; // truncate to actual number of chars read
-      *p_o_value = atoi(incomingBytes + 1);
+     // for(int i=1; i< (nbRead-1); i++) chksum += incomingBytes[i];
+      if((incomingBytes[0]==BRIDGE_START)/* && (chksum == incomingBytes[nbRead-1])*/)
+      {
+        *p_o_command = incomingBytes[1];
+        memcpy(p_o_buff,&incomingBytes[2],nbRead -2);
+        incomingBytes[nbRead] = '\0'; // truncate to actual number of chars read
+        *p_o_value = atoi(p_o_buff);
+      }
+      else 
+      {
+        nbRead =0;
+#ifdef DEBUG_YUN
+   Serial.println("no data header ");
+#endif
+      }
+#ifdef DEBUG_YUN
+   Serial.println(incomingBytes);
+#endif
     }
   }
 
   return nbRead;
-#ifdef DEBUG_YUN
-  else Serial.print("fail");
-#endif
 
 }
