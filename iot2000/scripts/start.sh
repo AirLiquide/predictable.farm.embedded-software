@@ -8,13 +8,13 @@ echo "Setting orange LED"
 
 # Pin IO4 => 24V
 echo "Exporting and setting PIN gpio6 (IO4) - 24V/VIN"
-echo 6 > /sys/class/gpio/export || "Pin 6 (IO4) already exported"
+echo 6 > /sys/class/gpio/export || echo "Pin 6 (IO4) already exported"
 echo "out" > /sys/class/gpio/gpio6/direction
 echo 1 > /sys/class/gpio/gpio6/value
 
 # Pin IO5 = BUS I2C
 echo "Exporting and setting PIN gpio0 (IO5) - Bus I2C"
-echo 0 > /sys/class/gpio/export || "Pin 0 (IO5) already exported"
+echo 0 > /sys/class/gpio/export || echo "Pin 0 (IO5) already exported"
 echo "out" > /sys/class/gpio/gpio0/direction
 echo 1 > /sys/class/gpio/gpio0/value
 
