@@ -1,6 +1,23 @@
 Predictable Farm — iot2000 flavour
 ---
 
+### Relevant documentation
+
+  - [Intel IOT MRAA lib](http://iotdk.intel.com/docs/master/mraa/node/classes/i2c.html#method_readWordReg)
+  - [MRAA Galileo Gen 2 limitations](https://github.com/intel-iot-devkit/mraa/blob/master/docs/galileorevh.md)
+  - [Galileo Gen 2 Pin mapping](https://link.springer.com/chapter/10.1007/978-1-4302-6838-3_14)
+  - [Quark X1000 i2C documentation](https://github.com/slavaim/Linux-Intel-Galileo-Gen2-QuarkX1000/tree/master/BSPv1.1.0/linux_v3.8.7/work/Documentation/i2c)
+
+### To enable / disable the i2c bus power
+
+    mraa-gpio set 04 00
+    mraa-gpio set 04 01
+
+### To force-stop the i2c bus
+
+    # Force deactivate PIN gpio6 (IO4) - Bus I2C
+    echo 0 > /sys/class/gpio/gpio6/value
+
 ### To stop all services 
 
     forever stopall
