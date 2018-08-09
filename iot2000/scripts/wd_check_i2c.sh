@@ -7,13 +7,15 @@ then
   # exit 0
 else
   echo "i2c ko"
-  # Cycling power on pin IO 5 (gpio0)
+  # Cycling power on pin IO 4 (gpio6)
   # Make sure pin is an output
-  echo "out" > gpio0/direction
-  # Set to 0, wait 3 seconds, back to 1
-  echo 0 > /sys/class/gpio/gpio0/value
-  sleep 3 # secs
-  echo 1 > /sys/class/gpio/gpio0/value
+  echo "out" > /sys/class/gpio/gpio6/direction
+  # Set to 0, wait 2 seconds, back to 1
+  echo 0 > /sys/class/gpio/gpio6/value
+  sleep 2 # secs
+  echo 1 > /sys/class/gpio/gpio6/value
+  sleep 2 # secs
+  # I2C should be back up
   # exit 255 #reboot
 fi
 # done
