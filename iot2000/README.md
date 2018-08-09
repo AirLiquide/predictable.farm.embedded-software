@@ -42,3 +42,14 @@ This will create a `predictable-farm_<version>.swu` file in the root folder, tha
     swupdate_unstripped --hwrevision iot2040:rev1 -i predictable-farm_<version>.swu
 
 > release_install.sh and release_restart.sh are pre and post install scripts used by swupdate during the update process.
+
+### Various information gathered around the i2C problems
+
+#### >
+To load the I2C driver in isolation from GPIO, use :
+
+    modprobe intel_qrk_gip gpio=0
+    modprobe intel_qrk_gip gpio=0 enable_msi=0
+
+#### >
+When a pull-up/pull-down resistor is enabled on A4/A5, an I2C bus is blocked with messages related to i2c designware problems.
