@@ -276,6 +276,10 @@ function lcd_print_now (cmd_process) {
     var text = null
     var posx = 0
     var posy = 0
+
+    // Reset fontmode in case we are back from a power cycle of the i2c bus
+    FontModeConf(Font_6x8, FM_ANL_AAA, BLACK_BAC)
+
     if (cmd.hasOwnProperty('clean')) {
       CleanAll(WHITE)
     }
