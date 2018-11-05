@@ -45,6 +45,8 @@ This will create a `predictable-farm_<version>.swu` file in the root folder, tha
 
 ### Various information gathered around the i2C problems
 
+Circuit simulation for R8 value : http://tinyurl.com/y7use2vr
+
 #### >
 To load the I2C driver in isolation from GPIO, use :
 
