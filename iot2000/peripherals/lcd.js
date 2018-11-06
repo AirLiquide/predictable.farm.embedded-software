@@ -249,14 +249,6 @@ function initialScreen () {
   CleanAll(WHITE)
   DispCharAt('X', 60, 2)
   DispStringAt('Air liquide', 20, 30)
-  // print("test write ");
-  // DrawDotAt(3,40, WHITE);
-  // DrawCircleAt( 30,  30,  10, 0);
-  // DrawRectangleAt( 100,  10,  10,  20, 0);
-}
-// while(1)
-{
-  initialScreen()
 }
 
 var x = 0
@@ -322,6 +314,8 @@ var local_service = scheduler.init({
   onDisconnect: initialScreen,
   onSchedule: lcd_print_now
 })
+
+initialScreen()
 
 /*
 // DEBUG ONLY
