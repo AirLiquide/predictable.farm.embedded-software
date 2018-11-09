@@ -1,3 +1,33 @@
+/*
+   SunLight.cpp
+   A library for Grove - Sunlight Sensor v1.0
+
+   Copyright (c) 2015 seeed technology inc.
+   Website    : www.seeed.cc
+   Author     : Fuhua.Chen
+   Modified Time: June 2015
+
+   The MIT License (MIT)
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #ifndef _SUNLIGHT_H_
 #define _SUNLIGHT_H_
 #include "Arduino.h"
@@ -5,9 +35,7 @@
 #include "SensorTypes.h"
 #ifdef SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR
 /*------------------------------------------------------//
-  Registers,Parameters and commands
-
-*/
+  Registers,Parameters and commands  */
 //
 //commands
 //
@@ -164,17 +192,13 @@
 
 #define SUNLIGHT_ADDR LIGHT_UV_MEASUREMENT_ADDR
 
-
 class SunLight {
   public:
     bool Begin(void);
     void Reset(void);
     void DeInit(void);
-    // uint8_t  ReadParamData(uint8_t Reg);
     uint8_t  WriteParamData(uint8_t Reg, uint8_t Value);
     uint16_t ReadVisible(void);
-    //uint16_t ReadIR(void);
-    //uint16_t ReadProximity(uint8_t PSn);
     uint16_t ReadUV(void);
   private:
     void  WriteByte(uint8_t Reg, uint8_t Value);
@@ -185,9 +209,3 @@ class SunLight {
 
 #endif /*SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR*/
 #endif
-
-
-
-
-
-

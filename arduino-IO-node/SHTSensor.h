@@ -38,8 +38,6 @@
 #endif
 #include <Arduino.h>
 
-
-
 #ifdef SENSOR_TYPE_RELATIVE_HUMIDITY_SENSOR
 
 // Forward declaration

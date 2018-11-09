@@ -18,8 +18,6 @@
 
   Please keep the above information when you use this code in your project.
 */
-
-
 #ifndef _SC16IS750_H_
 #define _SC16IS750_H_
 
@@ -173,8 +171,3 @@ class SC16IS750 : public Stream
 #endif
 
 #endif /*SENSOR_TYPE_CO2_SENSOR*/
-
-
-
-
-

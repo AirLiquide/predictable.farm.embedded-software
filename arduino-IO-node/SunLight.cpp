@@ -233,7 +233,3 @@ uint16_t SunLight::ReadUV(void)
   return (ReadHalfWord(SUNLIGHT_AUX_DATA0_UVINDEX0));
 }
 #endif /*SENSOR_TYPE_LOW_COST_SUNLIGHT_SENSOR*/
-
-
-
-

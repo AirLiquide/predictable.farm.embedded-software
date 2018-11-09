@@ -101,5 +101,3 @@ int32_t CO2::getppm() {
 }*/
 
 #endif
-
-
