@@ -5,8 +5,8 @@ Predictable Farm Embedded software
 
 Two versions are available :
 
-  - a legacy version for the Arduino Yùn (it was the first platform used for the predictable.farm project)
-  - An up-to-date version for the Siemens IOT2000 boards
+  - a legacy version for the **Arduino Yùn** (_it was the first platform used for the predictable.farm project_)
+  - An up-to-date version for the **Siemens IOT2000** boards
 
 ### Licenses
 
