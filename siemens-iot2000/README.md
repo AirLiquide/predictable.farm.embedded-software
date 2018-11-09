@@ -1,5 +1,11 @@
-Predictable Farm — iot2000 flavour
+Predictable Farm — Siemens iot2000 flavour
 ---
+
+### Installation
+
+Node modules should be installed in `/usr/lib/node_modules/` beforehand;
+
+The `start.sh`  script should be launched at boot time.
 
 ### Relevant documentation
 
@@ -31,7 +37,7 @@ Predictable Farm — iot2000 flavour
 
     forever restart <script>
 
-### To create a new release
+### To create a new release / update the code
 
 We use SWupdate (https://github.com/sbabic/swupdate) with its Yocto layer : https://github.com/sbabic/meta-swupdate/tree/morty.
 
@@ -43,15 +49,6 @@ This will create a `predictable-farm_<version>.swu` file in the root folder, tha
 
 > release_install.sh and release_restart.sh are pre and post install scripts used by swupdate during the update process.
 
-### Various information gathered around the i2C problems
+### CAD Files
 
-Circuit simulation for R8 value : http://tinyurl.com/y7use2vr
-
-#### >
-To load the I2C driver in isolation from GPIO, use :
-
-    modprobe intel_qrk_gip gpio=0
-    modprobe intel_qrk_gip gpio=0 enable_msi=0
-
-#### >
-When a pull-up/pull-down resistor is enabled on A4/A5, an I2C bus is blocked with messages related to i2c designware problems.
+In order to build the necessary interface board, the CAD folder includes : the Fritzing schema + the BOM and relevant datasheets.

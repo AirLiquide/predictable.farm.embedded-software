@@ -1,5 +1,4 @@
-
-Predictable Farm Yùn Bridge
+Predictable Farm — Yùn Bridge Flavour
 ---
 
 Needs NodeJS 0.10.* and BusyBox.
