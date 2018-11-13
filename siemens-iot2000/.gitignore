@@ -1,2 +1,4 @@
 *.swu
 TODO.todo
+config/*
+!config/default.json
