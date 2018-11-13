@@ -28,15 +28,14 @@
 
 'use strict'
 
-var DEVICE_ID = 0
-var SERVER_URL = 'http://lafactory.predictable.zone'
-
 const GRAPH_FILE = __dirname + '/graphs/graph.json'
-const HEARTBEAT_ENDPOINT = 'http://update.predictablefarm.net/heartbeat'
 
 const config = require('./config/default')
 const logger = require('./services/logger')
 const utils = require('./services/utils')
+
+var SERVER_URL = config.remote.default_server_url
+var DEVICE_ID = 0
 
 logger.init('service')
 
@@ -44,8 +43,9 @@ if (process.env.DEVICE_ID) {
   DEVICE_ID = process.env.DEVICE_ID
 }
 if (process.env.DEVICE_ZONE) {
-  SERVER_URL = 'http://' + process.env.DEVICE_ZONE + '.predictable.zone'
+  SERVER_URL = config.zone_pattern.replace("%s", process.env.DEVICE_ZONE)
 }
+
 
 // Command-line arguments take precedence, if there are any
 if (process.argv.length > 0) {
@@ -54,7 +54,7 @@ if (process.argv.length > 0) {
       if (index == 2) {
         DEVICE_ID = val
       } else if (index == 3) {
-        SERVER_URL = 'http://' + val + '.predictable.zone'
+        SERVER_URL = config.zone_pattern.replace("%s", val)
       }
     }
   })
@@ -203,7 +203,7 @@ var remote_socket = client(
 
 logger.log(' 4. Starting network check')
 var networkCheck = setInterval(function () {
-  var test_network_cmdline = '(/usr/bin/curl --head --silent ' + HEARTBEAT_ENDPOINT + ' | head -n 1) | grep -q 200 && echo 1 || echo 0'
+  var test_network_cmdline = '(/usr/bin/curl --head --silent ' + config.remote.heartbeat_url + ' | head -n 1) | grep -q 200 && echo 1 || echo 0'
   exec(test_network_cmdline, function (error, stdout, stderr) {
     var pingSuccess = (parseInt(stdout) == 1)
     networkStatus = {
@@ -213,7 +213,7 @@ var networkCheck = setInterval(function () {
 
     if (!pingSuccess) {
       utils.led(utils.colors.RED)
-      /* logger.log("Cannot get " + HEARTBEAT_ENDPOINT + ", scheduling a reboot in 10 minutes ...");
+      /* logger.log("Cannot get " + config.remote.heartbeat_url + ", scheduling a reboot in 10 minutes ...");
             rebootTimer = setTimeout(function () {
                 all_relay_off();
                 reboot();

@@ -1,6 +1,11 @@
 {
     "version": "2.0-siemens",
     "interface": "eth0",
+    "remote" : {
+        "zone_pattern": "http://%s.predictable.farm.domain",
+        "default_server_url": "http://defaultfarm.example.com",
+        "heartbeat_url": "http://example.com/heartbeat"
+    },
     "socket": {
         "port": 64000
     },
