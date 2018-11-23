@@ -1,4 +1,4 @@
-Predictable Farm Embedded software
+Predictable Farm — Embedded software
 ---
 
 ### Introduction
